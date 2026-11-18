@@ -129,7 +129,8 @@ class FakeEngine implements PolyCodeCompilerEngine {
     }
 
     if (shouldFailExecution) {
-      yield FailedExecutionEvent(const PolyCodeException('Simulated stream crash'));
+      yield FailedExecutionEvent(
+          const PolyCodeException('Simulated stream crash'));
       return;
     }
 

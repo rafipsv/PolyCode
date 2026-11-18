@@ -30,7 +30,8 @@ class UnsupportedLanguageException extends PolyCodeException {
 /// Thrown when a feature or runtime is not supported on the target OS/environment.
 class UnsupportedPlatformException extends PolyCodeException {
   UnsupportedPlatformException(this.platform, String feature)
-      : super('Feature "$feature" is not supported on platform ${platform.name}.');
+      : super(
+            'Feature "$feature" is not supported on platform ${platform.name}.');
   final PolyPlatform platform;
 }
 
@@ -53,7 +54,8 @@ class ExecutionTimeoutException extends PolyCodeException {
 
 /// Thrown when an active execution is explicitly cancelled.
 class ExecutionCancelledException extends PolyCodeException {
-  const ExecutionCancelledException() : super('Execution was cancelled by the caller.');
+  const ExecutionCancelledException()
+      : super('Execution was cancelled by the caller.');
 }
 
 /// Thrown when stdout/stderr streams exceed the maximum configured byte limit.

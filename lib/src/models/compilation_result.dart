@@ -26,8 +26,9 @@ class CompilationResult {
   List<Diagnostic> get errors =>
       diagnostics.where((d) => d.severity == DiagnosticSeverity.error).toList();
 
-  List<Diagnostic> get warnings =>
-      diagnostics.where((d) => d.severity == DiagnosticSeverity.warning).toList();
+  List<Diagnostic> get warnings => diagnostics
+      .where((d) => d.severity == DiagnosticSeverity.warning)
+      .toList();
 
   @override
   String toString() =>

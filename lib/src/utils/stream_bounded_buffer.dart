@@ -24,9 +24,11 @@ class StreamBoundedBuffer {
         final encoded = utf8.encode(chunk);
         final sublist = encoded.sublist(0, allowedBytes);
         _buffer.write(utf8.decode(sublist, allowMalformed: true));
-        _buffer.write('\n... [Output truncated: exceeded $maxBytes bytes limit]');
+        _buffer
+            .write('\n... [Output truncated: exceeded $maxBytes bytes limit]');
       } else {
-        _buffer.write('\n... [Output truncated: exceeded $maxBytes bytes limit]');
+        _buffer
+            .write('\n... [Output truncated: exceeded $maxBytes bytes limit]');
       }
       _currentByteLength = maxBytes;
       _isExceeded = true;

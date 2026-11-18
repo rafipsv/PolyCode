@@ -6,7 +6,8 @@ import '../../models/execution_request.dart';
 import '../../models/execution_result.dart';
 import 'javascript_worker_bridge.dart';
 
-JavaScriptWorkerBridge createJavaScriptWorkerBridge() => StubJavaScriptWorkerBridge();
+JavaScriptWorkerBridge createJavaScriptWorkerBridge() =>
+    StubJavaScriptWorkerBridge();
 
 /// Desktop / VM execution bridge using local Node.js or embedded fallback.
 class StubJavaScriptWorkerBridge implements JavaScriptWorkerBridge {
@@ -24,7 +25,8 @@ class StubJavaScriptWorkerBridge implements JavaScriptWorkerBridge {
     final nodeExecutable = _resolveNodeExecutable();
 
     if (nodeExecutable != null) {
-      yield* _executeWithNode(nodeExecutable, source, stdinData, request.config.timeout);
+      yield* _executeWithNode(
+          nodeExecutable, source, stdinData, request.config.timeout);
     } else {
       yield* _executeWithBasicEvaluator(source, stdinData, stopwatch);
     }
@@ -130,7 +132,10 @@ try {
         final startIdx = trimmed.indexOf('(');
         final endIdx = trimmed.lastIndexOf(')');
         if (startIdx != -1 && endIdx > startIdx) {
-          final content = trimmed.substring(startIdx + 1, endIdx).replaceAll("'", '').replaceAll('"', '');
+          final content = trimmed
+              .substring(startIdx + 1, endIdx)
+              .replaceAll("'", '')
+              .replaceAll('"', '');
           stdoutBuffer.writeln(content);
           yield StdoutExecutionEvent('$content\n');
         }

@@ -39,11 +39,14 @@ class Diagnostic {
           code == other.code;
 
   @override
-  int get hashCode => Object.hash(message, severity, line, column, fileName, code);
+  int get hashCode =>
+      Object.hash(message, severity, line, column, fileName, code);
 
   @override
   String toString() {
-    final loc = line != null ? ' (line: $line${column != null ? ', col: $column' : ''})' : '';
+    final loc = line != null
+        ? ' (line: $line${column != null ? ', col: $column' : ''})'
+        : '';
     return '[${severity.name.toUpperCase()}] $message$loc';
   }
 }

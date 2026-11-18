@@ -51,8 +51,7 @@ class _PolyCodeHomeScreenState extends State<PolyCodeHomeScreen> {
     if (!_polycode.isEngineAvailable(_selectedLanguage)) {
       final info = _polycode.getLanguageInfo(_selectedLanguage);
       setState(() {
-        _output =
-            'Status: ${info?.status.name.toUpperCase()}\n'
+        _output = 'Status: ${info?.status.name.toUpperCase()}\n'
             'Notice: ${info?.statusReason ?? "No active local engine registered yet."}\n'
             'Phase 1 complete: Core engine contracts and SDK foundation ready.';
       });
@@ -155,7 +154,8 @@ class _PolyCodeHomeScreenState extends State<PolyCodeHomeScreen> {
                 child: SingleChildScrollView(
                   child: Text(
                     _output,
-                    style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
+                    style:
+                        const TextStyle(fontFamily: 'monospace', fontSize: 13),
                   ),
                 ),
               ),

@@ -38,5 +38,6 @@ class SourceFile {
   int get hashCode => Object.hash(name, content, isEntry);
 
   @override
-  String toString() => 'SourceFile(name: $name, isEntry: $isEntry, length: ${content.length})';
+  String toString() =>
+      'SourceFile(name: $name, isEntry: $isEntry, length: ${content.length})';
 }

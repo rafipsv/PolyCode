@@ -19,13 +19,15 @@ void main() {
       expect(capabilities.languages.length, equals(9));
       expect(polycode.isEngineAvailable(PolyLanguage.javascript), isTrue);
       expect(polycode.isEngineAvailable(PolyLanguage.python), isTrue);
-      expect(capabilities.availableLanguages, contains(PolyLanguage.javascript));
+      expect(
+          capabilities.availableLanguages, contains(PolyLanguage.javascript));
       expect(capabilities.availableLanguages, contains(PolyLanguage.python));
     });
 
     test('respects autoRegisterDefaults false', () {
       final barePolycode = PolyCode(autoRegisterDefaults: false);
-      expect(barePolycode.getPlatformCapabilities().availableLanguages, isEmpty);
+      expect(
+          barePolycode.getPlatformCapabilities().availableLanguages, isEmpty);
       expect(barePolycode.isEngineAvailable(PolyLanguage.javascript), isFalse);
     });
 

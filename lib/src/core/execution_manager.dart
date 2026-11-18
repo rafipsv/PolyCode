@@ -48,7 +48,8 @@ class ExecutionManager {
       throw PolyCodeException(capturedError.toString());
     }
 
-    throw const PolyCodeException('Execution ended unexpectedly without a result.');
+    throw const PolyCodeException(
+        'Execution ended unexpectedly without a result.');
   }
 
   /// Streams lifecycle events for execution with timeout and cancellation enforcement.
@@ -66,29 +67,35 @@ class ExecutionManager {
     final engine = engineRegistry.getEngine(request.language);
     final stopwatch = Stopwatch()..start();
 
-    final stdoutBuffer = StreamBoundedBuffer(maxBytes: request.config.maxOutputBytes);
-    final stderrBuffer = StreamBoundedBuffer(maxBytes: request.config.maxOutputBytes);
+    final stdoutBuffer =
+        StreamBoundedBuffer(maxBytes: request.config.maxOutputBytes);
+    final stderrBuffer =
+        StreamBoundedBuffer(maxBytes: request.config.maxOutputBytes);
 
-    yield PreparingExecutionEvent(message: 'Initializing ${request.language.displayName} engine');
+    yield PreparingExecutionEvent(
+        message: 'Initializing ${request.language.displayName} engine');
 
     // Compilation phase if applicable
     CompilationResult? compilationResult;
     if (engine is PolyCodeCompilerEngine) {
       yield CompilingExecutionEvent();
       try {
-        compilationResult = await engine.compile(request).timeout(request.config.timeout);
+        compilationResult =
+            await engine.compile(request).timeout(request.config.timeout);
         if (!compilationResult.isSuccess) {
           stopwatch.stop();
           final error = CompilationException(
             message: 'Compilation failed for ${request.language.displayName}',
             compilationResult: compilationResult,
           );
-          yield FailedExecutionEvent(error, compilationResult: compilationResult);
+          yield FailedExecutionEvent(error,
+              compilationResult: compilationResult);
           return;
         }
       } on TimeoutException {
         stopwatch.stop();
-        yield FailedExecutionEvent(ExecutionTimeoutException(request.config.timeout));
+        yield FailedExecutionEvent(
+            ExecutionTimeoutException(request.config.timeout));
         return;
       } catch (e) {
         stopwatch.stop();
@@ -137,7 +144,8 @@ class ExecutionManager {
       }
     } on TimeoutException {
       stopwatch.stop();
-      yield FailedExecutionEvent(ExecutionTimeoutException(request.config.timeout));
+      yield FailedExecutionEvent(
+          ExecutionTimeoutException(request.config.timeout));
       return;
     } catch (e) {
       stopwatch.stop();

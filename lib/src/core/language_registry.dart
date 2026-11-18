@@ -17,7 +17,8 @@ class LanguageRegistry {
   PolyPlatform get platform => _platform;
 
   /// Returns unmodifiable mapping of all registered language metadata.
-  Map<PolyLanguage, LanguageInfo> get allLanguages => Map.unmodifiable(_languages);
+  Map<PolyLanguage, LanguageInfo> get allLanguages =>
+      Map.unmodifiable(_languages);
 
   /// Returns list of languages runnable on the current platform.
   List<PolyLanguage> get runnableLanguages => _languages.entries
@@ -34,7 +35,8 @@ class LanguageRegistry {
   }
 
   /// Sets status of a language dynamically based on engine discovery.
-  void setStatus(PolyLanguage language, LanguageStatus status, {String? reason}) {
+  void setStatus(PolyLanguage language, LanguageStatus status,
+      {String? reason}) {
     final existing = _languages[language];
     if (existing != null) {
       _languages[language] = existing.copyWith(

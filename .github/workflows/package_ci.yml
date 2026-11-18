@@ -1,24 +1,40 @@
-name: PolyCode Package CI
+name: Continuous Integration
 
 on:
   push:
-    branches: [main]
+    branches: [main, master]
   pull_request:
-    branches: [main]
+    branches: [main, master]
 
 jobs:
-  analyze_and_test:
+  test:
+    name: Test & Analyze
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
+          cache: true
+
       - name: Install dependencies
-        run: flutter pub get
+        run: |
+          flutter pub get
+          cd example && flutter pub get
+
       - name: Verify formatting
         run: dart format --output=none --set-exit-if-changed .
-      - name: Analyze package
-        run: flutter analyze
-      - name: Run unit tests
+
+      - name: Analyze package & example
+        run: |
+          flutter analyze --no-fatal-infos
+          cd example && flutter analyze --no-fatal-infos
+
+      - name: Run Test Suite
         run: flutter test
+
+      - name: Validate Pub Package
+        run: dart pub publish --dry-run

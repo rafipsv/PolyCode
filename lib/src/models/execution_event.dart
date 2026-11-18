@@ -14,7 +14,8 @@ class QueuedExecutionEvent extends ExecutionEvent {
 }
 
 class PreparingExecutionEvent extends ExecutionEvent {
-  PreparingExecutionEvent({this.message, DateTime? time}) : super(time ?? DateTime.now());
+  PreparingExecutionEvent({this.message, DateTime? time})
+      : super(time ?? DateTime.now());
   final String? message;
 }
 
@@ -27,17 +28,20 @@ class RunningExecutionEvent extends ExecutionEvent {
 }
 
 class StdoutExecutionEvent extends ExecutionEvent {
-  StdoutExecutionEvent(this.chunk, [DateTime? time]) : super(time ?? DateTime.now());
+  StdoutExecutionEvent(this.chunk, [DateTime? time])
+      : super(time ?? DateTime.now());
   final String chunk;
 }
 
 class StderrExecutionEvent extends ExecutionEvent {
-  StderrExecutionEvent(this.chunk, [DateTime? time]) : super(time ?? DateTime.now());
+  StderrExecutionEvent(this.chunk, [DateTime? time])
+      : super(time ?? DateTime.now());
   final String chunk;
 }
 
 class CompletedExecutionEvent extends ExecutionEvent {
-  CompletedExecutionEvent(this.result, [DateTime? time]) : super(time ?? DateTime.now());
+  CompletedExecutionEvent(this.result, [DateTime? time])
+      : super(time ?? DateTime.now());
   final ExecutionResult result;
 }
 

@@ -33,7 +33,8 @@ class ExecutionConfig {
       memoryLimitMb: memoryLimitMb ?? this.memoryLimitMb,
       args: args ?? this.args,
       compilerOptions: compilerOptions ?? this.compilerOptions,
-      cleanWorkspaceAfterRun: cleanWorkspaceAfterRun ?? this.cleanWorkspaceAfterRun,
+      cleanWorkspaceAfterRun:
+          cleanWorkspaceAfterRun ?? this.cleanWorkspaceAfterRun,
     );
   }
 

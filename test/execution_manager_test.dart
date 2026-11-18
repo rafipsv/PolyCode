@@ -131,7 +131,8 @@ void main() {
       );
 
       expect(result.isOutputLimitExceeded, isTrue);
-      expect(result.stdout, contains('Output truncated: exceeded 500 bytes limit'));
+      expect(result.stdout,
+          contains('Output truncated: exceeded 500 bytes limit'));
     });
   });
 }

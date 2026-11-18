@@ -6,5 +6,6 @@ enum LanguageStatus {
   planned,
   unsupported;
 
-  bool get isRunnable => this == LanguageStatus.available || this == LanguageStatus.experimental;
+  bool get isRunnable =>
+      this == LanguageStatus.available || this == LanguageStatus.experimental;
 }

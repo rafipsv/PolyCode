@@ -44,9 +44,11 @@ class WebPythonWorkerBridge implements PythonWorkerBridge {
           final data = jsonDecode(jsonString) as Map<String, dynamic>;
           final type = data['type'] as String?;
           if (type == 'STDOUT') {
-            controller.add(StdoutExecutionEvent(data['chunk'] as String? ?? ''));
+            controller
+                .add(StdoutExecutionEvent(data['chunk'] as String? ?? ''));
           } else if (type == 'STDERR') {
-            controller.add(StderrExecutionEvent(data['chunk'] as String? ?? ''));
+            controller
+                .add(StderrExecutionEvent(data['chunk'] as String? ?? ''));
           } else if (type == 'COMPLETED') {
             final exitCode = data['exitCode'] as int? ?? 0;
             final durationMs = data['durationMs'] as int? ?? 0;

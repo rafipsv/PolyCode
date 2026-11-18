@@ -23,7 +23,8 @@ void main() {
       expect(all.containsKey(PolyLanguage.go), isTrue);
     });
 
-    test('all languages are initially planned and not runnable in Phase 0/1', () {
+    test('all languages are initially planned and not runnable in Phase 0/1',
+        () {
       expect(registry.runnableLanguages, isEmpty);
       for (final lang in PolyLanguage.values) {
         final info = registry.getInfo(lang);
@@ -34,7 +35,8 @@ void main() {
     });
 
     test('status changes to available when updated', () {
-      registry.setStatus(PolyLanguage.python, LanguageStatus.available, reason: 'Engine attached');
+      registry.setStatus(PolyLanguage.python, LanguageStatus.available,
+          reason: 'Engine attached');
       final info = registry.getInfo(PolyLanguage.python);
       expect(info!.status, equals(LanguageStatus.available));
       expect(info.isRunnable, isTrue);

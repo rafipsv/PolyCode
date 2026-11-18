@@ -28,7 +28,8 @@ class EngineCapabilities {
   final String version;
   final String upstreamEngineName;
 
-  bool get supportsCompilation => supportedModes.contains(ExecutionMode.compiled);
+  bool get supportsCompilation =>
+      supportedModes.contains(ExecutionMode.compiled);
 
   @override
   String toString() =>

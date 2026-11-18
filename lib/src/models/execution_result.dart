@@ -33,7 +33,8 @@ class ExecutionResult {
   final ExecutionArtifact? artifact;
   final Object? error;
 
-  bool get hasErrors => stderr.isNotEmpty || (exitCode != null && exitCode != 0) || !isSuccess;
+  bool get hasErrors =>
+      stderr.isNotEmpty || (exitCode != null && exitCode != 0) || !isSuccess;
 
   @override
   String toString() =>

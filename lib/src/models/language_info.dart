@@ -51,5 +51,6 @@ class LanguageInfo {
   }
 
   @override
-  String toString() => 'LanguageInfo(${language.displayName}, status: ${status.name})';
+  String toString() =>
+      'LanguageInfo(${language.displayName}, status: ${status.name})';
 }

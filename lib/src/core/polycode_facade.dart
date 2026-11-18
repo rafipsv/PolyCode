@@ -63,7 +63,8 @@ class PolyCode {
   }
 
   /// Checks if an engine is registered for [language].
-  bool isEngineAvailable(PolyLanguage language) => engineRegistry.hasEngine(language);
+  bool isEngineAvailable(PolyLanguage language) =>
+      engineRegistry.hasEngine(language);
 
   /// Retrieves platform-wide execution capabilities and status.
   PlatformCapabilities getPlatformCapabilities() {
@@ -74,7 +75,8 @@ class PolyCode {
   }
 
   /// Retrieves metadata for a specific language.
-  LanguageInfo? getLanguageInfo(PolyLanguage language) => languageRegistry.getInfo(language);
+  LanguageInfo? getLanguageInfo(PolyLanguage language) =>
+      languageRegistry.getInfo(language);
 
   /// Executes code from [request] and returns a normalized [ExecutionResult].
   Future<ExecutionResult> execute(

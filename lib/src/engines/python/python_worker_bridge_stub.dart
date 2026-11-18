@@ -23,7 +23,8 @@ class StubPythonWorkerBridge implements PythonWorkerBridge {
     final pythonExecutable = _resolvePythonExecutable();
 
     if (pythonExecutable != null) {
-      yield* _executeWithPython3(pythonExecutable, source, stdinData, request.config.timeout);
+      yield* _executeWithPython3(
+          pythonExecutable, source, stdinData, request.config.timeout);
     } else {
       yield* _executeWithFallbackEvaluator(source, stdinData, stopwatch);
     }
@@ -105,7 +106,10 @@ class StubPythonWorkerBridge implements PythonWorkerBridge {
     for (final line in lines) {
       final trimmed = line.trim();
       if (trimmed.startsWith('print(') && trimmed.endsWith(')')) {
-        final inner = trimmed.substring(6, trimmed.length - 1).replaceAll("'", '').replaceAll('"', '');
+        final inner = trimmed
+            .substring(6, trimmed.length - 1)
+            .replaceAll("'", '')
+            .replaceAll('"', '');
         stdoutBuffer.writeln(inner);
         yield StdoutExecutionEvent('$inner\n');
       }
