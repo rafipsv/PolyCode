@@ -495,6 +495,9 @@ let stdinCursor = 0;
 function readLine() {
   return stdinCursor < stdinLines.length ? stdinLines[stdinCursor++] : null;
 }
+if (${jsonEncode(stdinData)}.trim().length > 0) {
+  console.log('[stdin: ' + ${jsonEncode(stdinData)}.trim() + ']');
+}
 try {
   $jsCode
   process.exit(0);
