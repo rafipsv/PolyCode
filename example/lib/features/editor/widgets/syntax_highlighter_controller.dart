@@ -81,7 +81,7 @@ class SyntaxHighlighterEditingController extends TextEditingController {
     r'except|finally|with|as|import|from|lambda|yield|pass|raise|assert|'
     r'function|const|let|var|switch|case|default|throw|new|this|async|'
     r'await|int|char|float|double|void|bool|struct|namespace|using|'
-    r'fn|mut|pub|impl|trait|match|package|func|go|defer|chan)\b)',
+    r'fn|mut|pub|impl|trait|match|package|func|go|defer|chan|fun|val|public|static)\b)',
   );
 
   static const _keywords = {
@@ -90,7 +90,7 @@ class SyntaxHighlighterEditingController extends TextEditingController {
     'from', 'lambda', 'yield', 'pass', 'raise', 'assert', 'function', 'const',
     'let', 'var', 'switch', 'case', 'default', 'throw', 'new', 'this', 'async',
     'await', 'struct', 'namespace', 'using', 'fn', 'mut', 'pub', 'impl',
-    'trait', 'match', 'package', 'func', 'go', 'defer', 'chan'
+    'trait', 'match', 'package', 'func', 'go', 'defer', 'chan', 'fun', 'val', 'public', 'static'
   };
   static const _types = {
     'int', 'char', 'float', 'double', 'void', 'bool', 'auto', 'size_t', 'string',

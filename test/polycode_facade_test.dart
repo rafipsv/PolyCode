@@ -23,6 +23,8 @@ void main() {
       expect(polycode.isEngineAvailable(PolyLanguage.cpp), isTrue);
       expect(polycode.isEngineAvailable(PolyLanguage.rust), isTrue);
       expect(polycode.isEngineAvailable(PolyLanguage.go), isTrue);
+      expect(polycode.isEngineAvailable(PolyLanguage.java), isTrue);
+      expect(polycode.isEngineAvailable(PolyLanguage.kotlin), isTrue);
       expect(
           capabilities.availableLanguages, contains(PolyLanguage.javascript));
       expect(capabilities.availableLanguages, contains(PolyLanguage.python));
@@ -30,6 +32,8 @@ void main() {
       expect(capabilities.availableLanguages, contains(PolyLanguage.cpp));
       expect(capabilities.availableLanguages, contains(PolyLanguage.rust));
       expect(capabilities.availableLanguages, contains(PolyLanguage.go));
+      expect(capabilities.availableLanguages, contains(PolyLanguage.java));
+      expect(capabilities.availableLanguages, contains(PolyLanguage.kotlin));
     });
 
     test('respects autoRegisterDefaults false', () {

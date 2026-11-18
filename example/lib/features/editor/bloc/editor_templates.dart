@@ -60,5 +60,26 @@ func main() {
     fmt.Printf("Sum of numbers: %d\\n", sum)
 }
 ''',
+    PolyLanguage.java: '''// PolyCode Java Runner
+public class Main {
+    public static void main(String[] args) {
+        System.out.println("Hello from PolyCode Java!");
+        int[] nums = {1, 2, 3, 4, 5};
+        int sum = 0;
+        for (int n : nums) {
+            sum += n;
+        }
+        System.out.println("Sum of numbers: " + sum);
+    }
+}
+''',
+    PolyLanguage.kotlin: '''// PolyCode Kotlin Runner
+fun main() {
+    println("Hello from PolyCode Kotlin!")
+    val nums = listOf(1, 2, 3, 4, 5)
+    val sum = nums.sum()
+    println("Sum of numbers: " + sum);
+}
+''',
   };
 }
