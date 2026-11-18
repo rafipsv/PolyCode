@@ -407,14 +407,19 @@ class StubGoWorkerBridge implements GoWorkerBridge {
       js = js.replaceAll(RegExp(r'import\s+"[^"]*";?'), '');
 
       js = js.replaceAllMapped(
-        RegExp(r'func\s+([A-Za-z_][A-Za-z0-9_]*)\s*\((.*?)\)(?:\s*[^{]+)?\s*\{'),
+        RegExp(
+            r'func\s+([A-Za-z_][A-Za-z0-9_]*)\s*\((.*?)\)(?:\s*[^{]+)?\s*\{'),
         (match) {
           final name = match.group(1)!;
           final rawParams = match.group(2) ?? '';
-          final cleanParams = rawParams.split(',').map((p) {
-            final parts = p.trim().split(RegExp(r'\s+'));
-            return parts.isNotEmpty ? parts.first : '';
-          }).where((p) => p.isNotEmpty).join(', ');
+          final cleanParams = rawParams
+              .split(',')
+              .map((p) {
+                final parts = p.trim().split(RegExp(r'\s+'));
+                return parts.isNotEmpty ? parts.first : '';
+              })
+              .where((p) => p.isNotEmpty)
+              .join(', ');
           return 'function $name($cleanParams) {';
         },
       );

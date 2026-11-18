@@ -75,10 +75,13 @@ class PolyCodeAppBar extends StatelessWidget implements PreferredSizeWidget {
                     children: [
                       if (layoutState.activeLayout == WorkspaceLayout.ide)
                         IconButton(
-                          icon: const Icon(Icons.view_sidebar_outlined, size: 18),
+                          icon:
+                              const Icon(Icons.view_sidebar_outlined, size: 18),
                           tooltip: 'Toggle File Explorer',
                           onPressed: () {
-                            context.read<LayoutBloc>().add(const ToggleSidebar());
+                            context
+                                .read<LayoutBloc>()
+                                .add(const ToggleSidebar());
                           },
                         ),
                       DropdownButtonHideUnderline(
@@ -91,11 +94,14 @@ class PolyCodeAppBar extends StatelessWidget implements PreferredSizeWidget {
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(layout.icon, size: 16, color: tokens.primaryText),
+                                  Icon(layout.icon,
+                                      size: 16, color: tokens.primaryText),
                                   const SizedBox(width: 6),
                                   Text(
                                     layout.displayName,
-                                    style: TextStyle(fontSize: 13, color: tokens.primaryText),
+                                    style: TextStyle(
+                                        fontSize: 13,
+                                        color: tokens.primaryText),
                                   ),
                                 ],
                               ),
@@ -151,8 +157,9 @@ class PolyCodeAppBar extends StatelessWidget implements PreferredSizeWidget {
                                   isRunnable ? 'Ready' : 'Planned',
                                   style: TextStyle(
                                     fontSize: 10,
-                                    color:
-                                        isRunnable ? Colors.green : Colors.orange,
+                                    color: isRunnable
+                                        ? Colors.green
+                                        : Colors.orange,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -182,7 +189,9 @@ class PolyCodeAppBar extends StatelessWidget implements PreferredSizeWidget {
                     label: 'Stop Execution',
                     child: IconButton.filled(
                       onPressed: () {
-                        context.read<ExecutionBloc>().add(const StopRequested());
+                        context
+                            .read<ExecutionBloc>()
+                            .add(const StopRequested());
                       },
                       icon: const Icon(Icons.stop),
                       style: IconButton.styleFrom(
@@ -227,7 +236,9 @@ class PolyCodeAppBar extends StatelessWidget implements PreferredSizeWidget {
                 icon: const Icon(Icons.delete_outline, size: 20),
                 tooltip: 'Clear Output',
                 onPressed: () {
-                  context.read<ExecutionBloc>().add(const ClearOutputRequested());
+                  context
+                      .read<ExecutionBloc>()
+                      .add(const ClearOutputRequested());
                 },
               ),
             ),
@@ -247,7 +258,8 @@ class PolyCodeAppBar extends StatelessWidget implements PreferredSizeWidget {
                 final themeBloc = context.read<ThemeBloc>();
                 switch (choice) {
                   case 'system':
-                    themeBloc.add(const SetThemeModeRequested(ThemeMode.system));
+                    themeBloc
+                        .add(const SetThemeModeRequested(ThemeMode.system));
                     break;
                   case 'dark':
                     themeBloc.add(
@@ -261,7 +273,8 @@ class PolyCodeAppBar extends StatelessWidget implements PreferredSizeWidget {
                     break;
                   case 'highContrast':
                     themeBloc.add(
-                      const SetThemePresetRequested(PolyCodeThemePreset.highContrast),
+                      const SetThemePresetRequested(
+                          PolyCodeThemePreset.highContrast),
                     );
                     break;
                 }
@@ -271,13 +284,15 @@ class PolyCodeAppBar extends StatelessWidget implements PreferredSizeWidget {
                   value: 'dark',
                   checked: themeState.preset == PolyCodeThemePreset.dark &&
                       themeState.mode == ThemeMode.dark,
-                  child: Text('Dark Theme', style: TextStyle(color: tokens.primaryText)),
+                  child: Text('Dark Theme',
+                      style: TextStyle(color: tokens.primaryText)),
                 ),
                 CheckedPopupMenuItem(
                   value: 'light',
                   checked: themeState.preset == PolyCodeThemePreset.light &&
                       themeState.mode == ThemeMode.light,
-                  child: Text('Light Theme', style: TextStyle(color: tokens.primaryText)),
+                  child: Text('Light Theme',
+                      style: TextStyle(color: tokens.primaryText)),
                 ),
                 CheckedPopupMenuItem(
                   value: 'highContrast',

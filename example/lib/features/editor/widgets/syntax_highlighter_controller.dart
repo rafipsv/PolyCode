@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:polycode/polycode.dart';
 import '../../../core/theme/polycode_theme_tokens.dart';
+import 'syntax_tokens.dart';
 
 /// Lightweight syntax highlighting controller adhering to active theme tokens.
 class SyntaxHighlighterEditingController extends TextEditingController {
@@ -13,7 +14,8 @@ class SyntaxHighlighterEditingController extends TextEditingController {
   PolyLanguage language;
   PolyCodeThemeTokens tokens;
 
-  void updateThemeAndLanguage(PolyLanguage newLang, PolyCodeThemeTokens newTokens) {
+  void updateThemeAndLanguage(
+      PolyLanguage newLang, PolyCodeThemeTokens newTokens) {
     language = newLang;
     tokens = newTokens;
   }
@@ -28,10 +30,9 @@ class SyntaxHighlighterEditingController extends TextEditingController {
     if (rawText.isEmpty) return TextSpan(style: style);
 
     final spans = <TextSpan>[];
-    final pattern = _syntaxRegex;
     int lastEnd = 0;
 
-    for (final match in pattern.allMatches(rawText)) {
+    for (final match in syntaxRegex.allMatches(rawText)) {
       if (match.start > lastEnd) {
         spans.add(TextSpan(
           text: rawText.substring(lastEnd, match.start),
@@ -45,7 +46,7 @@ class SyntaxHighlighterEditingController extends TextEditingController {
         text: matchedText,
         style: style?.copyWith(
           color: color,
-          fontWeight: _keywords.contains(matchedText)
+          fontWeight: syntaxKeywords.contains(matchedText)
               ? FontWeight.bold
               : FontWeight.normal,
         ),
@@ -64,36 +65,17 @@ class SyntaxHighlighterEditingController extends TextEditingController {
   }
 
   Color _resolveColor(String text) {
-    if (text.startsWith('//') || text.startsWith('#') || text.startsWith('/*')) {
+    if (text.startsWith('//') ||
+        text.startsWith('#') ||
+        text.startsWith('/*')) {
       return tokens.syntaxComment;
     }
     if (text.startsWith('"') || text.startsWith("'") || text.startsWith('`')) {
       return tokens.syntaxString;
     }
     if (RegExp(r'^\d').hasMatch(text)) return tokens.syntaxNumber;
-    return _types.contains(text) ? tokens.syntaxType : tokens.syntaxKeyword;
+    return syntaxTypes.contains(text)
+        ? tokens.syntaxType
+        : tokens.syntaxKeyword;
   }
-
-  static final RegExp _syntaxRegex = RegExp(
-    r'(//[^\n]*|#[^\n]*|/\*[\s\S]*?\*/|"(?:\\.|[^"\\])*"|'
-    r"'(?:\\.|[^'\\])*'|`[^\`]*`|\b\d+(?:\.\d+)?\b|"
-    r'\b(?:def|class|if|elif|else|while|for|in|return|break|continue|try|'
-    r'except|finally|with|as|import|from|lambda|yield|pass|raise|assert|'
-    r'function|const|let|var|switch|case|default|throw|new|this|async|'
-    r'await|int|char|float|double|void|bool|struct|namespace|using|'
-    r'fn|mut|pub|impl|trait|match|package|func|go|defer|chan|fun|val|public|static|final)\b)',
-  );
-
-  static const _keywords = {
-    'def', 'class', 'if', 'elif', 'else', 'while', 'for', 'in', 'return',
-    'break', 'continue', 'try', 'except', 'finally', 'with', 'as', 'import',
-    'from', 'lambda', 'yield', 'pass', 'raise', 'assert', 'function', 'const',
-    'let', 'var', 'switch', 'case', 'default', 'throw', 'new', 'this', 'async',
-    'await', 'struct', 'namespace', 'using', 'fn', 'mut', 'pub', 'impl',
-    'trait', 'match', 'package', 'func', 'go', 'defer', 'chan', 'fun', 'val', 'public', 'static', 'final'
-  };
-  static const _types = {
-    'int', 'char', 'float', 'double', 'void', 'bool', 'auto', 'size_t', 'string',
-    'i32', 'i64', 'u32', 'u64', 'usize', 'isize', 'f32', 'f64'
-  };
 }

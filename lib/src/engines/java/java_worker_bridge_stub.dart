@@ -72,7 +72,8 @@ class StubJavaWorkerBridge implements JavaWorkerBridge {
 
       if (isSuccess) {
         final classBytes = classFile.readAsBytesSync();
-        final artifactId = 'java_class_${DateTime.now().millisecondsSinceEpoch}';
+        final artifactId =
+            'java_class_${DateTime.now().millisecondsSinceEpoch}';
         _cachedArtifactDirs[artifactId] = tempDir;
         _cachedClassNames[artifactId] = className;
         _cachedSources[artifactId] = request.primarySource;
@@ -252,7 +253,8 @@ class StubJavaWorkerBridge implements JavaWorkerBridge {
     // Check class keyword
     if (!source.contains('class ')) {
       stopwatch.stop();
-      const err = "Main.java:1: error: class, interface, enum, or record expected\n";
+      const err =
+          "Main.java:1: error: class, interface, enum, or record expected\n";
       yield StderrExecutionEvent(err);
       yield CompletedExecutionEvent(
         ExecutionResult(
@@ -317,7 +319,9 @@ class StubJavaWorkerBridge implements JavaWorkerBridge {
       final method = match.group(1);
       var content = match.group(2)?.trim() ?? '';
 
-      if (content.startsWith('"') && content.endsWith('"') && content.length >= 2) {
+      if (content.startsWith('"') &&
+          content.endsWith('"') &&
+          content.length >= 2) {
         content = content.substring(1, content.length - 1);
       }
 
@@ -371,7 +375,8 @@ class StubJavaWorkerBridge implements JavaWorkerBridge {
     // Check class keyword
     if (!source.contains('class ')) {
       stopwatch.stop();
-      const err = "Main.java:1: error: class, interface, enum, or record expected\n";
+      const err =
+          "Main.java:1: error: class, interface, enum, or record expected\n";
       return CompilationResult(
         isSuccess: false,
         compilerOutput: err,

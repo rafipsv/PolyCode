@@ -70,7 +70,8 @@ fun main() {
       expect(result.isSuccess, isFalse);
       expect(result.diagnostics, isNotEmpty);
       expect(
-        result.diagnostics.any((d) => d.message.contains('expecting') || d.message.contains('error')),
+        result.diagnostics.any((d) =>
+            d.message.contains('expecting') || d.message.contains('error')),
         isTrue,
       );
     });

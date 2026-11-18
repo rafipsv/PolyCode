@@ -153,7 +153,8 @@ class WebDartWorkerBridge implements DartWorkerBridge {
             controller.close();
           }
         } catch (e) {
-          controller.add(FailedExecutionEvent(Exception('Malformed worker response: $e')));
+          controller.add(
+              FailedExecutionEvent(Exception('Malformed worker response: $e')));
           controller.close();
         }
       }

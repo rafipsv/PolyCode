@@ -96,7 +96,8 @@ class StatusBar extends StatelessWidget {
                       const SizedBox(width: 6),
                       Text(
                         'Executing...',
-                        style: TextStyle(fontSize: 11, color: tokens.primaryText),
+                        style:
+                            TextStyle(fontSize: 11, color: tokens.primaryText),
                       ),
                     ],
                   ),
@@ -111,7 +112,8 @@ class StatusBar extends StatelessWidget {
                   children: [
                     Text(
                       'Time: ${state.duration.inMilliseconds}ms',
-                      style: TextStyle(fontSize: 11, color: tokens.secondaryText),
+                      style:
+                          TextStyle(fontSize: 11, color: tokens.secondaryText),
                     ),
                     const SizedBox(width: 12),
                     if (state.exitCode != null)

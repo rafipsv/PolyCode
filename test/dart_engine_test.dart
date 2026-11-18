@@ -88,7 +88,8 @@ void helper() {
       final result = await engine.execute(request);
       expect(result.isSuccess, isFalse);
       expect(
-        result.diagnostics.any((d) => d.message.toLowerCase().contains('main')) ||
+        result.diagnostics
+                .any((d) => d.message.toLowerCase().contains('main')) ||
             result.stderr.toLowerCase().contains('main'),
         isTrue,
       );

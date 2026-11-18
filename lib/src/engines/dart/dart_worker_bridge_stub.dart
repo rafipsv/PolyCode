@@ -53,9 +53,8 @@ class StubDartWorkerBridge implements DartWorkerBridge {
 
       final output = '${result.stdout}\n${result.stderr}'.trim();
       final isSuccess = result.exitCode == 0;
-      final diagnostics = isSuccess
-          ? const <Diagnostic>[]
-          : DartDiagnosticParser.parse(output);
+      final diagnostics =
+          isSuccess ? const <Diagnostic>[] : DartDiagnosticParser.parse(output);
 
       if (isSuccess) {
         final srcBytes = srcFile.readAsBytesSync();
@@ -230,7 +229,8 @@ class StubDartWorkerBridge implements DartWorkerBridge {
         source.contains('main(');
     if (!hasMain) {
       stopwatch.stop();
-      const err = "main.dart:1:1: Error: No 'main' function found in source file.\n";
+      const err =
+          "main.dart:1:1: Error: No 'main' function found in source file.\n";
       yield StderrExecutionEvent(err);
       yield CompletedExecutionEvent(
         ExecutionResult(
@@ -264,16 +264,19 @@ class StubDartWorkerBridge implements DartWorkerBridge {
     }
 
     // Evaluate print calls
-    final printRegex =
-        RegExp(r'print\s*\(\s*(.*?)\s*\)\s*;');
+    final printRegex = RegExp(r'print\s*\(\s*(.*?)\s*\)\s*;');
     bool printed = false;
 
     for (final match in printRegex.allMatches(source)) {
       var content = match.group(1)?.trim() ?? '';
 
-      if (content.startsWith('"') && content.endsWith('"') && content.length >= 2) {
+      if (content.startsWith('"') &&
+          content.endsWith('"') &&
+          content.length >= 2) {
         content = content.substring(1, content.length - 1);
-      } else if (content.startsWith("'") && content.endsWith("'") && content.length >= 2) {
+      } else if (content.startsWith("'") &&
+          content.endsWith("'") &&
+          content.length >= 2) {
         content = content.substring(1, content.length - 1);
       }
 
@@ -326,7 +329,8 @@ class StubDartWorkerBridge implements DartWorkerBridge {
         source.contains('main(');
     if (!hasMain) {
       stopwatch.stop();
-      const err = "main.dart:1:1: Error: No 'main' function found in source file.\n";
+      const err =
+          "main.dart:1:1: Error: No 'main' function found in source file.\n";
       return CompilationResult(
         isSuccess: false,
         compilerOutput: err,

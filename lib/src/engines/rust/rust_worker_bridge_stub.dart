@@ -419,16 +419,21 @@ class StubRustWorkerBridge implements RustWorkerBridge {
       );
 
       js = js.replaceAllMapped(
-        RegExp(r'fn\s+([A-Za-z_][A-Za-z0-9_]*)\s*\((.*?)\)(?:\s*->\s*[^{]+)?\s*\{'),
+        RegExp(
+            r'fn\s+([A-Za-z_][A-Za-z0-9_]*)\s*\((.*?)\)(?:\s*->\s*[^{]+)?\s*\{'),
         (match) {
           final name = match.group(1)!;
           final rawParams = match.group(2) ?? '';
-          final cleanParams = rawParams.split(',').map((p) {
-            final colon = p.indexOf(':');
-            return (colon != -1 ? p.substring(0, colon) : p)
-                .replaceAll('mut ', '')
-                .trim();
-          }).where((p) => p.isNotEmpty).join(', ');
+          final cleanParams = rawParams
+              .split(',')
+              .map((p) {
+                final colon = p.indexOf(':');
+                return (colon != -1 ? p.substring(0, colon) : p)
+                    .replaceAll('mut ', '')
+                    .trim();
+              })
+              .where((p) => p.isNotEmpty)
+              .join(', ');
           return 'function $name($cleanParams) {';
         },
       );
@@ -466,7 +471,8 @@ class StubRustWorkerBridge implements RustWorkerBridge {
       );
 
       js = js.replaceAllMapped(
-        RegExp(r'let\s+(?:mut\s+)?([A-Za-z_][A-Za-z0-9_]*)(?:\s*:\s*[^=;]+)?\s*='),
+        RegExp(
+            r'let\s+(?:mut\s+)?([A-Za-z_][A-Za-z0-9_]*)(?:\s*:\s*[^=;]+)?\s*='),
         (match) => 'let ${match.group(1)} =',
       );
 

@@ -80,7 +80,9 @@ func main() {
       expect(result.isSuccess, isFalse);
       expect(result.diagnostics, isNotEmpty);
       expect(
-        result.diagnostics.any((d) => d.message.contains('syntax error') || d.message.contains('unexpected')),
+        result.diagnostics.any((d) =>
+            d.message.contains('syntax error') ||
+            d.message.contains('unexpected')),
         isTrue,
       );
     });

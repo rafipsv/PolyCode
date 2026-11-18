@@ -89,7 +89,8 @@ class EditorBloc extends Bloc<EditorEvent, EditorState> {
         isDirty: false,
       ),
     );
-    await _storage?.setString('polycode_editor_language', event.newLanguage.name);
+    await _storage?.setString(
+        'polycode_editor_language', event.newLanguage.name);
   }
 
   void _onResetTemplate(

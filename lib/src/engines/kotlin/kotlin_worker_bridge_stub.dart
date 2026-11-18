@@ -61,7 +61,8 @@ class StubKotlinWorkerBridge implements KotlinWorkerBridge {
 
       if (isSuccess) {
         final jarBytes = jarFile.readAsBytesSync();
-        final artifactId = 'kotlin_jar_${DateTime.now().millisecondsSinceEpoch}';
+        final artifactId =
+            'kotlin_jar_${DateTime.now().millisecondsSinceEpoch}';
         _cachedArtifactFiles[artifactId] = jarFile;
         _cachedSources[artifactId] = request.primarySource;
 
@@ -232,7 +233,8 @@ class StubKotlinWorkerBridge implements KotlinWorkerBridge {
     // Check main function
     if (!source.contains('fun main')) {
       stopwatch.stop();
-      const err = "Main.kt:1:1: error: expecting a 'main' function declaration\n";
+      const err =
+          "Main.kt:1:1: error: expecting a 'main' function declaration\n";
       yield StderrExecutionEvent(err);
       yield CompletedExecutionEvent(
         ExecutionResult(
@@ -276,14 +278,15 @@ class StubKotlinWorkerBridge implements KotlinWorkerBridge {
     }
 
     // Evaluate println / print
-    final printRegex =
-        RegExp(r'(?:println|print)\s*\(\s*(.*?)\s*\)\s*(?:;|$)');
+    final printRegex = RegExp(r'(?:println|print)\s*\(\s*(.*?)\s*\)\s*(?:;|$)');
     bool printed = false;
 
     for (final match in printRegex.allMatches(source)) {
       var content = match.group(1)?.trim() ?? '';
 
-      if (content.startsWith('"') && content.endsWith('"') && content.length >= 2) {
+      if (content.startsWith('"') &&
+          content.endsWith('"') &&
+          content.length >= 2) {
         content = content.substring(1, content.length - 1);
       }
 
@@ -336,7 +339,8 @@ class StubKotlinWorkerBridge implements KotlinWorkerBridge {
     // Check main function
     if (!source.contains('fun main')) {
       stopwatch.stop();
-      const err = "Main.kt:1:1: error: expecting a 'main' function declaration\n";
+      const err =
+          "Main.kt:1:1: error: expecting a 'main' function declaration\n";
       return CompilationResult(
         isSuccess: false,
         compilerOutput: err,
@@ -392,20 +396,26 @@ class StubKotlinWorkerBridge implements KotlinWorkerBridge {
       js = js.replaceAll(RegExp(r'import\s+[A-Za-z0-9_\.\*]+;?'), '');
 
       js = js.replaceAllMapped(
-        RegExp(r'fun\s+([A-Za-z_][A-Za-z0-9_]*)\s*\((.*?)\)(?:\s*:\s*[^{]+)?\s*\{'),
+        RegExp(
+            r'fun\s+([A-Za-z_][A-Za-z0-9_]*)\s*\((.*?)\)(?:\s*:\s*[^{]+)?\s*\{'),
         (match) {
           final name = match.group(1)!;
           final rawParams = match.group(2) ?? '';
-          final cleanParams = rawParams.split(',').map((p) {
-            final colon = p.indexOf(':');
-            return (colon != -1 ? p.substring(0, colon) : p).trim();
-          }).where((p) => p.isNotEmpty).join(', ');
+          final cleanParams = rawParams
+              .split(',')
+              .map((p) {
+                final colon = p.indexOf(':');
+                return (colon != -1 ? p.substring(0, colon) : p).trim();
+              })
+              .where((p) => p.isNotEmpty)
+              .join(', ');
           return 'function $name($cleanParams) {';
         },
       );
 
       js = js.replaceAllMapped(
-        RegExp(r'\b(?:val|var)\s+([A-Za-z_][A-Za-z0-9_]*)(?:\s*:\s*[^=;]+)?\s*='),
+        RegExp(
+            r'\b(?:val|var)\s+([A-Za-z_][A-Za-z0-9_]*)(?:\s*:\s*[^=;]+)?\s*='),
         (match) => 'let ${match.group(1)} =',
       );
 
@@ -417,8 +427,10 @@ class StubKotlinWorkerBridge implements KotlinWorkerBridge {
       js = js.replaceAll('.size', '.length');
 
       js = js.replaceAllMapped(
-        RegExp(r'\bfor\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)\s+in\s+(.*?)\s+until\s+(.*?)\s*\)\s*\{'),
-        (m) => 'for (let ${m.group(1)} = ${m.group(2)}; ${m.group(1)} < ${m.group(3)}; ${m.group(1)}++) {',
+        RegExp(
+            r'\bfor\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)\s+in\s+(.*?)\s+until\s+(.*?)\s*\)\s*\{'),
+        (m) =>
+            'for (let ${m.group(1)} = ${m.group(2)}; ${m.group(1)} < ${m.group(3)}; ${m.group(1)}++) {',
       );
 
       js = js.replaceAllMapped(

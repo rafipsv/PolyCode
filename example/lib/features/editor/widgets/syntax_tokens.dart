@@ -1,0 +1,88 @@
+import 'package:flutter/material.dart';
+
+final RegExp syntaxRegex = RegExp(
+  r'(//[^\n]*|#[^\n]*|/\*[\s\S]*?\*/|"(?:\\.|[^"\\])*"|'
+  r"'(?:\\.|[^'\\])*'|`[^\`]*`|\b\d+(?:\.\d+)?\b|"
+  r'\b(?:def|class|if|elif|else|while|for|in|return|break|continue|try|'
+  r'except|finally|with|as|import|from|lambda|yield|pass|raise|assert|'
+  r'function|const|let|var|switch|case|default|throw|new|this|async|'
+  r'await|int|char|float|double|void|bool|struct|namespace|using|'
+  r'fn|mut|pub|impl|trait|match|package|func|go|defer|chan|fun|val|public|static|final)\b)',
+);
+
+const Set<String> syntaxKeywords = {
+  'def',
+  'class',
+  'if',
+  'elif',
+  'else',
+  'while',
+  'for',
+  'in',
+  'return',
+  'break',
+  'continue',
+  'try',
+  'except',
+  'finally',
+  'with',
+  'as',
+  'import',
+  'from',
+  'lambda',
+  'yield',
+  'pass',
+  'raise',
+  'assert',
+  'function',
+  'const',
+  'let',
+  'var',
+  'switch',
+  'case',
+  'default',
+  'throw',
+  'new',
+  'this',
+  'async',
+  'await',
+  'struct',
+  'namespace',
+  'using',
+  'fn',
+  'mut',
+  'pub',
+  'impl',
+  'trait',
+  'match',
+  'package',
+  'func',
+  'go',
+  'defer',
+  'chan',
+  'fun',
+  'val',
+  'public',
+  'static',
+  'final'
+};
+
+const Set<String> syntaxTypes = {
+  'int',
+  'char',
+  'float',
+  'double',
+  'void',
+  'bool',
+  'auto',
+  'size_t',
+  'string',
+  'i32',
+  'i64',
+  'u32',
+  'u64',
+  'usize',
+  'isize',
+  'f32',
+  'f64'
+};

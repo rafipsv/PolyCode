@@ -69,17 +69,19 @@ void main() {
       // Verify persistence reload
       final reloadedBloc = ThemeBloc(storage: mockStorage);
       await pumpEventQueue();
-      expect(reloadedBloc.state.preset,
-          equals(PolyCodeThemePreset.highContrast));
+      expect(
+          reloadedBloc.state.preset, equals(PolyCodeThemePreset.highContrast));
     });
 
-    test('PolyCodeThemeTokens dark, light, and highContrast tokens are distinct',
+    test(
+        'PolyCodeThemeTokens dark, light, and highContrast tokens are distinct',
         () {
       const darkTokens = PolyCodeThemeTokens.dark;
       const lightTokens = PolyCodeThemeTokens.light;
       const hcTokens = PolyCodeThemeTokens.highContrast;
 
-      expect(darkTokens.appBackground, isNot(equals(lightTokens.appBackground)));
+      expect(
+          darkTokens.appBackground, isNot(equals(lightTokens.appBackground)));
       expect(hcTokens.appBackground, equals(const Color(0xFF000000)));
       expect(hcTokens.border, equals(const Color(0xFFFFFFFF)));
 
@@ -130,8 +132,8 @@ void main() {
       layoutBloc.add(const SetReadOnlyMode(true));
       await pumpEventQueue();
 
-      expect(await mockStorage.getString('polycode_layout'),
-          equals('codeBlock'));
+      expect(
+          await mockStorage.getString('polycode_layout'), equals('codeBlock'));
       expect(await mockStorage.getDouble('polycode_font_size'), equals(16.0));
       expect(await mockStorage.getBool('polycode_read_only'), isTrue);
 
@@ -167,7 +169,8 @@ void main() {
       expect(find.byType(PolyCodeShell), findsOneWidget);
     });
 
-    testWidgets('PolyCodeShell renders smoothly in Light theme', (tester) async {
+    testWidgets('PolyCodeShell renders smoothly in Light theme',
+        (tester) async {
       await tester.binding.setSurfaceSize(const Size(1200, 800));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 

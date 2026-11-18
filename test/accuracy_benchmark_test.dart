@@ -58,7 +58,8 @@ console.log("JS_FIB: " + fib10);
       expect(result.stdout, contains('JS_FIB: 55'));
     });
 
-    test('Python: BST Traversal, Matrix Multiplication, and Prime Sieve', () async {
+    test('Python: BST Traversal, Matrix Multiplication, and Prime Sieve',
+        () async {
       const pyCode = '''
 class Node:
     def __init__(self, val):
@@ -123,7 +124,8 @@ print("PY_MATMUL:", prod)
       expect(result.isSuccess, isTrue);
       expect(result.exitCode, equals(0));
       expect(result.stdout, contains('PY_BST: [5, 10, 15, 20, 25, 30]'));
-      expect(result.stdout, contains('PY_PRIMES: [2, 3, 5, 7, 11, 13, 17, 19]'));
+      expect(
+          result.stdout, contains('PY_PRIMES: [2, 3, 5, 7, 11, 13, 17, 19]'));
       expect(result.stdout, contains('PY_MATMUL: [[19, 22], [43, 50]]'));
     });
 
@@ -197,7 +199,8 @@ int main() {
       expect(result.stdout, contains('C_FIB: 55'));
     });
 
-    test('C++: Modern Vector, Lambdas, std::sort, and Tower of Hanoi', () async {
+    test('C++: Modern Vector, Lambdas, std::sort, and Tower of Hanoi',
+        () async {
       const cppCode = '''
 #include <iostream>
 #include <vector>
@@ -300,13 +303,15 @@ public class Main {
 
       expect(result.isSuccess, isTrue);
       expect(result.exitCode, equals(0));
-      expect(result.stdout, contains('JAVA_SORTED: [11, 12, 22, 25, 34, 64, 90]'));
+      expect(
+          result.stdout, contains('JAVA_SORTED: [11, 12, 22, 25, 34, 64, 90]'));
       expect(result.stdout, contains('JAVA_SUM: 258'));
       expect(result.stdout, contains('JAVA_GCD: 6'));
       expect(result.stdout, contains('JAVA_FIB: 55'));
     });
 
-    test('Dart: Higher-Order Functions, QuickSort, and Map Reduction', () async {
+    test('Dart: Higher-Order Functions, QuickSort, and Map Reduction',
+        () async {
       const dartCode = '''
 List<int> quickSort(List<int> list) {
   if (list.length <= 1) return list;
@@ -349,12 +354,14 @@ void main() {
 
       expect(result.isSuccess, isTrue);
       expect(result.exitCode, equals(0));
-      expect(result.stdout, contains('DART_SORTED: 11, 12, 22, 25, 34, 64, 90'));
+      expect(
+          result.stdout, contains('DART_SORTED: 11, 12, 22, 25, 34, 64, 90'));
       expect(result.stdout, contains('DART_SUM: 258'));
       expect(result.stdout, contains('DART_FIB: 55'));
     });
 
-    test('Rust: Vector Sort, Recursive Fibonacci, and Array Iteration', () async {
+    test('Rust: Vector Sort, Recursive Fibonacci, and Array Iteration',
+        () async {
       const rustCode = '''
 fn fibonacci(n: i32) -> i32 {
     if n <= 1 {
@@ -381,7 +388,8 @@ fn main() {
 
       expect(result.isSuccess, isTrue);
       expect(result.exitCode, equals(0));
-      expect(result.stdout.replaceAll(' ', ''), contains('11,12,22,25,34,64,90'));
+      expect(
+          result.stdout.replaceAll(' ', ''), contains('11,12,22,25,34,64,90'));
       expect(result.stdout, contains('RUST_FIB: 55'));
     });
 
@@ -463,7 +471,8 @@ fun main() {
 
       expect(result.isSuccess, isTrue);
       expect(result.exitCode, equals(0));
-      expect(result.stdout.replaceAll(' ', ''), contains('11,12,22,25,34,64,90'));
+      expect(
+          result.stdout.replaceAll(' ', ''), contains('11,12,22,25,34,64,90'));
       expect(result.stdout, contains('KT_FIB: 55'));
     });
   });

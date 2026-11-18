@@ -87,9 +87,8 @@ void main() {
       );
 
       expect(
-        find.byWidgetPredicate((w) =>
-            w is Semantics &&
-            w.properties.label == 'Language Selector'),
+        find.byWidgetPredicate(
+            (w) => w is Semantics && w.properties.label == 'Language Selector'),
         findsOneWidget,
       );
 

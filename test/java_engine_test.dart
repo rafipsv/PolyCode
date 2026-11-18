@@ -75,7 +75,10 @@ public class Main {
       expect(result.isSuccess, isFalse);
       expect(result.diagnostics, isNotEmpty);
       expect(
-        result.diagnostics.any((d) => d.message.contains('parsing') || d.message.contains('reached end of file') || d.message.contains('error')),
+        result.diagnostics.any((d) =>
+            d.message.contains('parsing') ||
+            d.message.contains('reached end of file') ||
+            d.message.contains('error')),
         isTrue,
       );
     });
@@ -97,7 +100,8 @@ public class Main {
       expect(result.isSuccess, isFalse);
       expect(
         result.stderr.toLowerCase().contains('main') ||
-            result.diagnostics.any((d) => d.message.toLowerCase().contains('main')),
+            result.diagnostics
+                .any((d) => d.message.toLowerCase().contains('main')),
         isTrue,
       );
     });

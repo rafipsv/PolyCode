@@ -43,8 +43,8 @@ class PolyCodeShell extends StatelessWidget {
           listenWhen: (previous, current) =>
               previous.isRunning && !current.isRunning,
           listener: (context, state) {
-            final isSuccess =
-                state.status == ExecutionStatus.completed && state.exitCode == 0;
+            final isSuccess = state.status == ExecutionStatus.completed &&
+                state.exitCode == 0;
             final message = isSuccess
                 ? 'Code execution finished successfully (Exit code: 0).'
                 : 'Code execution failed (Exit code: ${state.exitCode ?? 1}).';
