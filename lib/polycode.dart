@@ -16,6 +16,7 @@ export 'src/core/polycode_facade.dart';
 export 'src/engines/javascript/javascript_engine.dart';
 export 'src/engines/polycode_compiler_engine.dart';
 export 'src/engines/polycode_engine.dart';
+export 'src/engines/python/python_engine.dart';
 
 // Exceptions
 export 'src/exceptions/polycode_exception.dart';

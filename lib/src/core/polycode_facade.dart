@@ -1,5 +1,6 @@
 import '../engines/javascript/javascript_engine.dart';
 import '../engines/polycode_engine.dart';
+import '../engines/python/python_engine.dart';
 import '../models/compilation_result.dart';
 import '../models/execution_event.dart';
 import '../models/execution_request.dart';
@@ -31,6 +32,7 @@ class PolyCode {
     );
     if (autoRegisterDefaults) {
       registerEngine(JavaScriptEngine());
+      registerEngine(PythonEngine());
     }
   }
 

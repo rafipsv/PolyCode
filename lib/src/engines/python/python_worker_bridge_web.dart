@@ -1,0 +1,116 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:js_interop';
+import 'package:web/web.dart' as web;
+import '../../models/execution_event.dart';
+import '../../models/execution_request.dart';
+import '../../models/execution_result.dart';
+import 'python_worker_bridge.dart';
+import 'python_worker_script.dart';
+
+PythonWorkerBridge createPythonWorkerBridge() => WebPythonWorkerBridge();
+
+/// Web implementation using real Web Workers and Object URLs for Python.
+class WebPythonWorkerBridge implements PythonWorkerBridge {
+  WebPythonWorkerBridge();
+
+  web.Worker? _activeWorker;
+  String? _activeObjectUrl;
+
+  @override
+  Stream<ExecutionEvent> executeStream(ExecutionRequest request) async* {
+    final controller = StreamController<ExecutionEvent>();
+
+    _cleanupActive();
+
+    final blobParts = [kPythonWorkerScript.toJS].toJS;
+    final blob = web.Blob(
+      blobParts,
+      web.BlobPropertyBag(type: 'application/javascript'),
+    );
+    final objectUrl = web.URL.createObjectURL(blob);
+    _activeObjectUrl = objectUrl;
+
+    final worker = web.Worker(objectUrl.toJS);
+    _activeWorker = worker;
+
+    final reqId = 'py_${DateTime.now().millisecondsSinceEpoch}';
+
+    worker.onmessage = ((web.MessageEvent event) {
+      final rawData = event.data;
+      final jsonString = rawData.dartify()?.toString();
+      if (jsonString != null) {
+        try {
+          final data = jsonDecode(jsonString) as Map<String, dynamic>;
+          final type = data['type'] as String?;
+          if (type == 'STDOUT') {
+            controller.add(StdoutExecutionEvent(data['chunk'] as String? ?? ''));
+          } else if (type == 'STDERR') {
+            controller.add(StderrExecutionEvent(data['chunk'] as String? ?? ''));
+          } else if (type == 'COMPLETED') {
+            final exitCode = data['exitCode'] as int? ?? 0;
+            final durationMs = data['durationMs'] as int? ?? 0;
+            final error = data['error'];
+
+            controller.add(
+              CompletedExecutionEvent(
+                ExecutionResult(
+                  exitCode: exitCode,
+                  isSuccess: exitCode == 0,
+                  duration: Duration(milliseconds: durationMs),
+                  error: error,
+                ),
+              ),
+            );
+            controller.close();
+          }
+        } catch (_) {}
+      }
+    }).toJS;
+
+    worker.onerror = ((web.ErrorEvent event) {
+      final msg = event.message;
+      controller.add(StderrExecutionEvent('Python Worker Error: $msg\n'));
+      controller.add(
+        CompletedExecutionEvent(
+          ExecutionResult(
+            exitCode: 1,
+            isSuccess: false,
+            error: msg,
+          ),
+        ),
+      );
+      controller.close();
+    }).toJS;
+
+    final payload = jsonEncode({
+      'id': reqId,
+      'source': request.primarySource,
+      'stdin': request.stdin,
+      'timeoutMs': request.config.timeout.inMilliseconds,
+    });
+    worker.postMessage(payload.toJS);
+
+    try {
+      yield* controller.stream;
+    } finally {
+      _cleanupActive();
+    }
+  }
+
+  void _cleanupActive() {
+    if (_activeWorker != null) {
+      _activeWorker!.terminate();
+      _activeWorker = null;
+    }
+    if (_activeObjectUrl != null) {
+      web.URL.revokeObjectURL(_activeObjectUrl!);
+      _activeObjectUrl = null;
+    }
+  }
+
+  @override
+  Future<void> dispose() async {
+    _cleanupActive();
+  }
+}
