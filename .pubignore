@@ -1,0 +1,10 @@
+.dart_tool/
+.github/
+.idea/
+.vscode/
+build/
+docs/
+tool/
+build_web.sh
+*.log
+polycode_complete_implementation_spec.md

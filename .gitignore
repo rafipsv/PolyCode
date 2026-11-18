@@ -1,0 +1,27 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildpath
+.cproject
+.fvm/
+.idea/
+.project
+.settings/
+.vscode/
+
+# Pub related
+.dart_tool/
+.packages
+build/
+pubspec.lock
+
+# Documentation
+doc/api/
+
+# Flutter/Android/iOS/Web
+.flutter-plugins
+.flutter-plugins-dependencies
