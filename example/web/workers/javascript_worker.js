@@ -1,23 +1,33 @@
 // PolyCode JavaScript Sandboxed Web Worker
 self.onmessage = async function(event) {
-  const data = event.data || {};
+  let data = event.data || {};
+  if (typeof data === 'string') {
+    try {
+      data = JSON.parse(data);
+    } catch (_) {}
+  }
+
   const requestId = data.id || 'req_0';
   const source = data.source || '';
   const stdin = data.stdin || '';
 
+  function post(msg) {
+    self.postMessage(JSON.stringify(msg));
+  }
+
   const customConsole = {
     log: function(...args) {
       const text = args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' ') + '\n';
-      self.postMessage({ id: requestId, type: 'STDOUT', chunk: text });
+      post({ id: requestId, type: 'STDOUT', chunk: text });
     },
     info: function(...args) { customConsole.log(...args); },
     warn: function(...args) {
       const text = args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' ') + '\n';
-      self.postMessage({ id: requestId, type: 'STDERR', chunk: text });
+      post({ id: requestId, type: 'STDERR', chunk: text });
     },
     error: function(...args) {
       const text = args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' ') + '\n';
-      self.postMessage({ id: requestId, type: 'STDERR', chunk: text });
+      post({ id: requestId, type: 'STDERR', chunk: text });
     }
   };
 
@@ -38,7 +48,7 @@ self.onmessage = async function(event) {
       await result;
     }
     const elapsed = Math.round(performance.now() - startTime);
-    self.postMessage({
+    post({
       id: requestId,
       type: 'COMPLETED',
       exitCode: 0,
@@ -47,8 +57,8 @@ self.onmessage = async function(event) {
   } catch (err) {
     const elapsed = Math.round(performance.now() - startTime);
     const errText = err && (err.stack || err.message) ? String(err.stack || err.message) : String(err);
-    self.postMessage({ id: requestId, type: 'STDERR', chunk: errText + '\n' });
-    self.postMessage({
+    post({ id: requestId, type: 'STDERR', chunk: errText + '\n' });
+    post({
       id: requestId,
       type: 'COMPLETED',
       exitCode: 1,

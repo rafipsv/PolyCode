@@ -20,6 +20,7 @@ class WebRustWorkerBridge implements RustWorkerBridge {
 
   web.Worker? _activeWorker;
   String? _activeObjectUrl;
+  final Map<String, String> _cachedSources = {};
 
   web.Worker _getOrCreateWorker() {
     if (_activeWorker != null) return _activeWorker!;
@@ -42,10 +43,18 @@ class WebRustWorkerBridge implements RustWorkerBridge {
 
     worker.onmessage = ((web.MessageEvent event) {
       final rawData = event.data;
-      final jsonString = rawData.dartify()?.toString();
-      if (jsonString != null) {
+      final dartData = rawData.dartify();
+      Map<String, dynamic>? data;
+      if (dartData is String) {
         try {
-          final data = jsonDecode(jsonString) as Map<String, dynamic>;
+          data = jsonDecode(dartData) as Map<String, dynamic>;
+        } catch (_) {}
+      } else if (dartData is Map) {
+        data = dartData.map((k, v) => MapEntry(k.toString(), v));
+      }
+
+      if (data != null) {
+        try {
           if (data['id'] == reqId && data['type'] == 'COMPILATION_RESULT') {
             final isSuccess = data['isSuccess'] as bool? ?? false;
             final output = data['compilerOutput'] as String? ?? '';
@@ -64,9 +73,15 @@ class WebRustWorkerBridge implements RustWorkerBridge {
               );
             }).toList();
 
+            final artifactId =
+                'rust_wasm_${DateTime.now().millisecondsSinceEpoch}';
+            if (isSuccess) {
+              _cachedSources[artifactId] = request.primarySource;
+            }
+
             final artifact = isSuccess
                 ? ExecutionArtifact(
-                    id: 'rust_wasm_${DateTime.now().millisecondsSinceEpoch}',
+                    id: artifactId,
                     language: request.language,
                     bytes: Uint8List.fromList([0x00, 0x61, 0x73, 0x6d]),
                   )
@@ -119,12 +134,27 @@ class WebRustWorkerBridge implements RustWorkerBridge {
     final worker = _getOrCreateWorker();
     final reqId = 'rust_exec_${DateTime.now().millisecondsSinceEpoch}';
 
+    var source = request.primarySource;
+    if (source.isEmpty &&
+        artifact != null &&
+        _cachedSources.containsKey(artifact.id)) {
+      source = _cachedSources[artifact.id]!;
+    }
+
     worker.onmessage = ((web.MessageEvent event) {
       final rawData = event.data;
-      final jsonString = rawData.dartify()?.toString();
-      if (jsonString != null) {
+      final dartData = rawData.dartify();
+      Map<String, dynamic>? data;
+      if (dartData is String) {
         try {
-          final data = jsonDecode(jsonString) as Map<String, dynamic>;
+          data = jsonDecode(dartData) as Map<String, dynamic>;
+        } catch (_) {}
+      } else if (dartData is Map) {
+        data = dartData.map((k, v) => MapEntry(k.toString(), v));
+      }
+
+      if (data != null) {
+        try {
           if (data['id'] == reqId) {
             final type = data['type'] as String?;
             if (type == 'STDOUT') {
@@ -173,7 +203,7 @@ class WebRustWorkerBridge implements RustWorkerBridge {
     final payload = jsonEncode({
       'id': reqId,
       'type': 'EXECUTE',
-      'source': request.primarySource,
+      'source': source,
       'stdin': request.stdin,
       'language': request.language.id,
       'timeoutMs': request.config.timeout.inMilliseconds,

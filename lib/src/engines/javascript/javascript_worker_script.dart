@@ -16,7 +16,6 @@ self.onmessage = async function(event) {
     self.postMessage(JSON.stringify(msg));
   }
 
-  // Intercept standard console output
   const customConsole = {
     log: function(...args) {
       const text = args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' ') + '\n';
@@ -35,7 +34,6 @@ self.onmessage = async function(event) {
     }
   };
 
-  // Stdin line reader
   let stdinLines = stdin ? stdin.split('\n') : [];
   let stdinCursor = 0;
   function readline() {

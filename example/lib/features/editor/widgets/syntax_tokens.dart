@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-
 final RegExp syntaxRegex = RegExp(
   r'(//[^\n]*|#[^\n]*|/\*[\s\S]*?\*/|"(?:\\.|[^"\\])*"|'
   r"'(?:\\.|[^'\\])*'|`[^\`]*`|\b\d+(?:\.\d+)?\b|"

@@ -29,13 +29,13 @@ self.onmessage = async function(event) {
           line: 1,
           column: 1,
           severity: 'error',
-          message: "'main' function not found in source file"
+          message: "Kotlin requires a main entrypoint function: fun main()"
         });
         post({
           id: requestId,
           type: 'COMPILATION_RESULT',
           isSuccess: false,
-          compilerOutput: "Main.kt:1:1: error: expecting a 'main' function declaration\n",
+          compilerOutput: "Main.kt:1:1: error: Kotlin requires a main entrypoint function: fun main()\n",
           diagnostics: diagnostics
         });
         return;
@@ -48,13 +48,13 @@ self.onmessage = async function(event) {
           line: source.split('\n').length,
           column: 1,
           severity: 'error',
-          message: "expecting '}'"
+          message: "Expecting '}'"
         });
         post({
           id: requestId,
           type: 'COMPILATION_RESULT',
           isSuccess: false,
-          compilerOutput: `Main.kt:${source.split('\n').length}:1: error: expecting '}'\n`,
+          compilerOutput: `Main.kt:${source.split('\n').length}:1: error: Expecting '}'\n`,
           diagnostics: diagnostics
         });
         return;
@@ -64,71 +64,100 @@ self.onmessage = async function(event) {
         id: requestId,
         type: 'COMPILATION_RESULT',
         isSuccess: true,
-        compilerOutput: 'Compiled Main.kt into Kotlin/Wasm binary (Main.wasm) successfully.\n',
+        compilerOutput: 'Kotlin IR backend compiled bytecode successfully.\n',
         diagnostics: []
       });
       return;
     }
 
-    if (type === 'EXECUTE') {
-      post({ id: requestId, type: 'STDOUT', chunk: 'Executing Kotlin/Wasm runtime in Web Worker...\n' });
-
-      const hasMain = source.includes('fun main');
-      if (!hasMain) {
-        post({ id: requestId, type: 'STDERR', chunk: "Main.kt:1:1: error: expecting a 'main' function declaration\n" });
-        post({
-          id: requestId,
-          type: 'COMPLETED',
-          exitCode: 1,
-          durationMs: Math.round(performance.now() - startTime),
-          error: 'Execution failed: main function required'
-        });
-        return;
-      }
-
-      const openBraces = (source.match(/\{/g) || []).length;
-      const closeBraces = (source.match(/\}/g) || []).length;
-      if (openBraces !== closeBraces) {
-        post({ id: requestId, type: 'STDERR', chunk: `Main.kt:${source.split('\n').length}:1: error: expecting '}'\n` });
-        post({
-          id: requestId,
-          type: 'COMPLETED',
-          exitCode: 1,
-          durationMs: Math.round(performance.now() - startTime),
-          error: 'Execution failed: syntax error'
-        });
-        return;
-      }
-
-      // Evaluate println / print
-      const printRegex = /(?:println|print)\s*\(\s*(?:"([^"]*)")?(?:\s*\+\s*([^)]*))?\s*\)/g;
-      let match;
-      let printed = false;
-
-      while ((match = printRegex.exec(source)) !== null) {
-        let text = match[1] || '';
-        if (match[2]) {
-          text += ' ' + match[2].trim();
-        }
-        post({ id: requestId, type: 'STDOUT', chunk: text + '\n' });
-        printed = true;
-      }
-
-      if (stdin.trim().length > 0) {
-        post({ id: requestId, type: 'STDOUT', chunk: `[stdin processed: ${stdin.trim()}]\n` });
-      }
-
-      if (!printed) {
-        post({ id: requestId, type: 'STDOUT', chunk: 'Kotlin program finished successfully (exit code 0).\n' });
-      }
-
+    // EXECUTE phase
+    if (!source.includes('fun main')) {
+      post({ id: requestId, type: 'STDERR', chunk: "Main.kt:1:1: error: Kotlin requires a main entrypoint function: fun main()\n" });
       post({
         id: requestId,
         type: 'COMPLETED',
-        exitCode: 0,
-        durationMs: Math.round(performance.now() - startTime)
+        exitCode: 1,
+        durationMs: Math.round(performance.now() - startTime),
+        error: 'Execution failed: main function required'
       });
+      return;
     }
+
+    function replaceCall(str, funcName, replacementFn) {
+      let idx = 0;
+      while ((idx = str.indexOf(funcName, idx)) !== -1) {
+        let openParen = str.indexOf("(", idx + funcName.length);
+        if (openParen === -1) break;
+        let depth = 1;
+        let closeParen = openParen + 1;
+        while (closeParen < str.length && depth > 0) {
+          if (str[closeParen] === "(") depth++;
+          else if (str[closeParen] === ")") depth--;
+          closeParen++;
+        }
+        if (depth === 0) {
+          let args = str.substring(openParen + 1, closeParen - 1);
+          let endSemi = str.indexOf(";", closeParen - 1);
+          let replaceLen = (endSemi !== -1 && endSemi <= closeParen + 1) ? (endSemi + 1 - idx) : (closeParen - idx);
+          let replaced = replacementFn(args);
+          str = str.substring(0, idx) + replaced + str.substring(idx + replaceLen);
+          idx += replaced.length;
+        } else {
+          idx = closeParen;
+        }
+      }
+      return str;
+    }
+
+    let js = source;
+    js = js.replace(/\/\/[^\n]*/g, '');
+    js = js.replace(/\/\*[\s\S]*?\*\//g, '');
+    js = js.replace(/package\s+[A-Za-z0-9_.]+;?/g, '');
+    js = js.replace(/import\s+[A-Za-z0-9_.*]+;?/g, '');
+
+    js = replaceCall(js, 'println', function(arg) {
+      if (!arg || !arg.trim()) return '__poly_out("\\n");';
+      return `__poly_out((${arg}) + "\\n");`;
+    });
+
+    js = replaceCall(js, 'print', function(arg) {
+      if (!arg || !arg.trim()) return '';
+      return `__poly_out(String(${arg}));`;
+    });
+
+    js = js.replace(/fun\s+([A-Za-z_]\w*)\s*\((.*?)\)(?:\s*:\s*[^{]+)?\s*\{/g, function(_, name, rawParams) {
+      const cleanParams = (rawParams || '').split(',').map(p => {
+        const colon = p.indexOf(':');
+        return (colon !== -1 ? p.substring(0, colon) : p).trim();
+      }).filter(Boolean).join(', ');
+      return `function ${name}(${cleanParams}) {`;
+    });
+
+    js = js.replace(/\b(?:val|var)\s+([A-Za-z_]\w*)(?:\s*:\s*[^=;]+)?\s*=/g, 'let $1 =');
+    js = js.replace(/(?:mutableListOf|listOf|arrayOf|intArrayOf)\s*\((.*?)\)/g, '[$1]');
+    js = js.replace(/\bfor\s*\(\s*([A-Za-z_]\w*)\s+in\s+(\d+)\s+until\s+(\d+)\s*\)\s*\{/g, 'for (let $1 = $2; $1 < $3; $1++) {');
+    js = js.replace(/\bfor\s*\(\s*([A-Za-z_]\w*)\s+in\s+(\d+)\.\.(\d+)\s*\)\s*\{/g, 'for (let $1 = $2; $1 <= $3; $1++) {');
+    js = js.replace(/\bfor\s*\(\s*([A-Za-z_]\w*)\s+in\s+([^{]+)\)\s*\{/g, 'for (let $1 of ($2)) {');
+
+    js = js.replace(/\.size\b/g, '.length');
+    js = js.replace(/\.sort\(\)/g, '.sort((a, b) => a - b)');
+
+    if (stdin && stdin.trim()) {
+      post({ id: requestId, type: 'STDOUT', chunk: `[stdin: ${stdin.trim()}]\n` });
+    }
+
+    const runner = new Function('__poly_out', js + '\nif (typeof main === "function") { main(); }');
+    runner(function(chunk) {
+      post({ id: requestId, type: 'STDOUT', chunk: String(chunk) });
+    });
+
+    const elapsed = Math.round(performance.now() - startTime);
+    post({
+      id: requestId,
+      type: 'COMPLETED',
+      exitCode: 0,
+      durationMs: elapsed
+    });
   } catch (err) {
     post({ id: requestId, type: 'STDERR', chunk: 'Kotlin Runtime Error: ' + err.message + '\n' });
     post({

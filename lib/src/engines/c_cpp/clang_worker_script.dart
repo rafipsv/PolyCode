@@ -13,6 +13,7 @@ self.onmessage = async function(event) {
   const source = data.source || '';
   const language = data.language || 'c';
   const stdin = data.stdin || '';
+  const isCpp = language === 'cpp';
 
   function post(msg) {
     self.postMessage(JSON.stringify(msg));
@@ -22,7 +23,6 @@ self.onmessage = async function(event) {
 
   try {
     if (type === 'COMPILE') {
-      // Syntax & compilation check in worker
       const diagnostics = [];
       const hasMain = source.includes('main(') || source.includes('main (');
 
@@ -43,7 +43,6 @@ self.onmessage = async function(event) {
         return;
       }
 
-      // Check simple syntax errors
       const openBraces = (source.match(/\{/g) || []).length;
       const closeBraces = (source.match(/\}/g) || []).length;
       if (openBraces !== closeBraces) {
@@ -73,34 +72,137 @@ self.onmessage = async function(event) {
       return;
     }
 
-    // Execution phase (WASI simulation in Worker)
-    // Virtual I/O runner for C/C++ in WebAssembly / browser worker
-    const lines = source.split('\n');
-    let stdinLines = stdin ? stdin.split('\n') : [];
-    let stdinIdx = 0;
+    // EXECUTE phase
+    if (!source.includes('main(') && !source.includes('main (')) {
+      post({ id: requestId, type: 'STDERR', chunk: "error: undefined reference to 'main'\n" });
+      post({
+        id: requestId,
+        type: 'COMPLETED',
+        exitCode: 1,
+        durationMs: Math.round(performance.now() - startTime),
+        error: "undefined reference to 'main'"
+      });
+      return;
+    }
 
-    for (let line of lines) {
-      line = line.trim();
-      // Intercept printf or std::cout
-      if (line.includes('printf(')) {
-        const match = line.match(/printf\s*\(\s*"([^"]*)"/);
-        if (match) {
-          const text = match[1].replace(/\\n/g, '\n');
-          post({ id: requestId, type: 'STDOUT', chunk: text });
-        }
-      } else if (line.includes('std::cout') || line.includes('cout <<')) {
-        const parts = line.split('<<').slice(1);
-        for (let part of parts) {
-          part = part.replace(/;/g, '').trim();
-          if (part.startsWith('"') && part.endsWith('"')) {
-            const text = part.slice(1, -1).replace(/\\n/g, '\n');
-            post({ id: requestId, type: 'STDOUT', chunk: text });
-          } else if (part === 'std::endl' || part === 'endl') {
-            post({ id: requestId, type: 'STDOUT', chunk: '\n' });
-          }
+    function splitTopLevel(str, delimiter) {
+      let res = [];
+      let current = "";
+      let depth = 0;
+      for (let i = 0; i < str.length; i++) {
+        let char = str[i];
+        if (char === "(" || char === "{" || char === "[") depth++;
+        else if (char === ")" || char === "}" || char === "]") depth--;
+        if (depth === 0 && str.substr(i, delimiter.length) === delimiter) {
+          res.push(current);
+          current = "";
+          i += delimiter.length - 1;
+        } else {
+          current += char;
         }
       }
+      if (current.length > 0) res.push(current);
+      return res;
     }
+
+    let js = source;
+    js = js.replace(/\/\*[\s\S]*?\*\//g, "");
+    js = js.replace(/\/\/[^\n]*/g, "");
+    js = js.replace(/#include\s*<[^>]+>/g, "");
+    js = js.replace(/#include\s*"[^"]+"/g, "");
+    js = js.replace(/using\s+namespace\s+std\s*;/g, "");
+
+    if (isCpp) {
+      js = js.replace(/std::/g, "");
+    }
+
+    js = js.replace(/struct\s+([A-Za-z_]\w*)\s*\{([^}]+)\};/g, function(_, name, body) {
+      const fields = (body.match(/[A-Za-z_]\w*(?=\s*;)/g) || []);
+      return `function ${name}(${fields.join(", ")}) { ${fields.map(f => `this.${f} = ${f};`).join(" ")} }`;
+    });
+
+    js = js.replace(/\([A-Za-z_*\s]+\)?\s*malloc\s*\([^)]+\)/g, "{}");
+
+    js = js.replace(/printf\s*\(\s*"([^"]*)"(?:\s*,\s*([^;]+))?\s*\);/g, function(_, fmt, argsStr) {
+      if (!argsStr || !argsStr.trim()) {
+        return `__poly_out(${JSON.stringify(fmt.replace(/\\n/g, "\n"))});`;
+      }
+      const args = splitTopLevel(argsStr, ",");
+      let parts = fmt.split(/%[0-9]*\.?[0-9]*[dsfculxX%]/);
+      let out = "__poly_out(";
+      for (let i = 0; i < parts.length; i++) {
+        if (parts[i]) {
+          out += JSON.stringify(parts[i].replace(/\\n/g, "\n"));
+          if (i < args.length) out += " + ";
+        }
+        if (i < args.length) {
+          out += `(${args[i].trim()})`;
+          if (i < parts.length - 1 && parts[i + 1]) out += " + ";
+        }
+      }
+      out += ");";
+      return out;
+    });
+
+    if (isCpp) {
+      js = js.replace(/cout\s*<<\s*([^;]+);/g, function(_, streamStr) {
+        const parts = splitTopLevel(streamStr, "<<");
+        let out = "__poly_out(";
+        for (let i = 0; i < parts.length; i++) {
+          let p = parts[i].trim();
+          if (p === "endl") {
+            out += "\"\\n\"";
+          } else {
+            out += `(${p})`;
+          }
+          if (i < parts.length - 1) out += " + ";
+        }
+        out += ");";
+        return out;
+      });
+
+      js = js.replace(/\[[^\]]*\]\s*\(([^)]*)\)\s*(?:->\s*[^{]+)?\s*\{([^}]+)\}/g, function(_, params, body) {
+        const cleanParams = params.split(",").map(p => {
+          const parts = p.trim().split(/\s+/);
+          return parts[parts.length - 1];
+        }).join(", ");
+        return `((${cleanParams}) => { ${body} })`;
+      });
+
+      js = js.replace(/sort\s*\(\s*([A-Za-z_]\w*)\.begin\(\)\s*,\s*\1\.end\(\)(?:,\s*([\s\S]*?))?\s*\)\s*;/g, function(_, name, comp) {
+        if (comp && comp.trim()) return `${name}.sort(${comp.trim()});`;
+        return `${name}.sort((a, b) => a - b);`;
+      });
+
+      js = js.replace(/vector\s*<[^>]+>\s*([A-Za-z_]\w*)(?:\s*=\s*\{([^}]+)\})?;/g, function(_, name, init) {
+        return `let ${name} = [${init || ""}];`;
+      });
+      js = js.replace(/\.push_back\s*\(/g, ".push(");
+      js = js.replace(/\.size\s*\(\s*\)/g, ".length");
+    }
+
+    js = js.replace(/\b(?:int|void|float|double|char|long|bool|auto|size_t)\s+(?:[*&]\s*)?([A-Za-z_]\w*)\s*\(([^)]*)\)\s*\{/g, function(_, name, params) {
+      const cleanParams = params.split(",").map(p => {
+        p = p.trim();
+        const parts = p.split(/\s+/);
+        return parts[parts.length - 1].replace(/[*&\[\]]/g, "");
+      }).filter(Boolean).join(", ");
+      return `function ${name}(${cleanParams}) {`;
+    });
+
+    js = js.replace(/\b(?:int|float|double|char|long|bool|auto|size_t)\s+(?:[*&]\s*)?([A-Za-z_]\w*)\s*\[([^\]]*)\]\s*=\s*\{([^}]+)\};/g, "let $1 = [$3];");
+    js = js.replace(/\b(?:int|float|double|char|long|bool|auto|size_t)\s+(?:[*&]\s*)?([A-Za-z_]\w*)\s*\[([^\]]+)\];/g, "let $1 = new Array($2).fill(0);");
+    js = js.replace(/\b(?:int|float|double|char|long|bool|auto|size_t)\s+(?:[*&]\s*)?([A-Za-z_]\w*)/g, "let $1");
+    js = js.replace(/->/g, ".");
+
+    if (stdin && stdin.trim()) {
+      post({ id: requestId, type: 'STDOUT', chunk: `[stdin: ${stdin.trim()}]\n` });
+    }
+
+    const runner = new Function('__poly_out', js + '\nif (typeof main === "function") { main(); }');
+    runner(function(chunk) {
+      post({ id: requestId, type: 'STDOUT', chunk: String(chunk) });
+    });
 
     const elapsed = Math.round(performance.now() - startTime);
     post({

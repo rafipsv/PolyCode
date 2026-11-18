@@ -22,20 +22,20 @@ self.onmessage = async function(event) {
   try {
     if (type === 'COMPILE') {
       const diagnostics = [];
-      const hasMain = source.includes('void main') || source.includes('main()') || source.includes('main(');
+      const hasMain = source.includes('void main') || source.includes('main()') || source.includes('main ()');
 
       if (!hasMain) {
         diagnostics.push({
           line: 1,
           column: 1,
           severity: 'error',
-          message: "No 'main' function found in Dart source."
+          message: "The function 'main' isn't defined"
         });
         post({
           id: requestId,
           type: 'COMPILATION_RESULT',
           isSuccess: false,
-          compilerOutput: "main.dart:1:1: Error: No 'main' function found in source file.\n",
+          compilerOutput: "Error: The function 'main' isn't defined.\n",
           diagnostics: diagnostics
         });
         return;
@@ -48,13 +48,13 @@ self.onmessage = async function(event) {
           line: source.split('\n').length,
           column: 1,
           severity: 'error',
-          message: "Expected '}'."
+          message: "Expected '}'"
         });
         post({
           id: requestId,
           type: 'COMPILATION_RESULT',
           isSuccess: false,
-          compilerOutput: `main.dart:${source.split('\n').length}:1: Error: Expected '}'.\n`,
+          compilerOutput: `Error: Expected '}'.\n`,
           diagnostics: diagnostics
         });
         return;
@@ -64,71 +64,95 @@ self.onmessage = async function(event) {
         id: requestId,
         type: 'COMPILATION_RESULT',
         isSuccess: true,
-        compilerOutput: 'Compiled main.dart into standalone kernel/Wasm artifact successfully.\n',
+        compilerOutput: 'Compiled Dart source to JS/WASM bundle successfully.\n',
         diagnostics: []
       });
       return;
     }
 
-    if (type === 'EXECUTE') {
-      post({ id: requestId, type: 'STDOUT', chunk: 'Executing Dart script in Web Worker sandbox...\n' });
-
-      const hasMain = source.includes('void main') || source.includes('main()') || source.includes('main(');
-      if (!hasMain) {
-        post({ id: requestId, type: 'STDERR', chunk: "main.dart:1:1: Error: No 'main' function found in source file.\n" });
-        post({
-          id: requestId,
-          type: 'COMPLETED',
-          exitCode: 1,
-          durationMs: Math.round(performance.now() - startTime),
-          error: 'Execution failed: main function required'
-        });
-        return;
-      }
-
-      const openBraces = (source.match(/\{/g) || []).length;
-      const closeBraces = (source.match(/\}/g) || []).length;
-      if (openBraces !== closeBraces) {
-        post({ id: requestId, type: 'STDERR', chunk: `main.dart:${source.split('\n').length}:1: Error: Expected '}'.\n` });
-        post({
-          id: requestId,
-          type: 'COMPLETED',
-          exitCode: 1,
-          durationMs: Math.round(performance.now() - startTime),
-          error: 'Execution failed: syntax error'
-        });
-        return;
-      }
-
-      // Evaluate print calls
-      const printRegex = /print\s*\(\s*(?:"([^"]*)")?(?:\s*\+\s*([^)]*))?\s*\)/g;
-      let match;
-      let printed = false;
-
-      while ((match = printRegex.exec(source)) !== null) {
-        let text = match[1] || '';
-        if (match[2]) {
-          text += ' ' + match[2].trim();
-        }
-        post({ id: requestId, type: 'STDOUT', chunk: text + '\n' });
-        printed = true;
-      }
-
-      if (stdin.trim().length > 0) {
-        post({ id: requestId, type: 'STDOUT', chunk: `[stdin processed: ${stdin.trim()}]\n` });
-      }
-
-      if (!printed) {
-        post({ id: requestId, type: 'STDOUT', chunk: 'Dart program finished successfully (exit code 0).\n' });
-      }
-
+    // EXECUTE phase
+    if (!source.includes('main')) {
+      post({ id: requestId, type: 'STDERR', chunk: "Error: The function 'main' isn't defined.\n" });
       post({
         id: requestId,
         type: 'COMPLETED',
-        exitCode: 0,
-        durationMs: Math.round(performance.now() - startTime)
+        exitCode: 1,
+        durationMs: Math.round(performance.now() - startTime),
+        error: 'Execution failed: main function required'
       });
+      return;
     }
+
+    function replaceCall(str, funcName, replacementFn) {
+      let idx = 0;
+      while ((idx = str.indexOf(funcName, idx)) !== -1) {
+        let openParen = str.indexOf("(", idx + funcName.length);
+        if (openParen === -1) break;
+        if (idx > 0 && /[A-Za-z0-9_]/.test(str[idx - 1])) {
+          idx += funcName.length;
+          continue;
+        }
+        let depth = 1;
+        let closeParen = openParen + 1;
+        while (closeParen < str.length && depth > 0) {
+          if (str[closeParen] === "(") depth++;
+          else if (str[closeParen] === ")") depth--;
+          closeParen++;
+        }
+        if (depth === 0) {
+          let args = str.substring(openParen + 1, closeParen - 1);
+          let endSemi = str.indexOf(";", closeParen - 1);
+          let replaceLen = (endSemi !== -1 && endSemi <= closeParen + 1) ? (endSemi + 1 - idx) : (closeParen - idx);
+          let replaced = replacementFn(args);
+          str = str.substring(0, idx) + replaced + str.substring(idx + replaceLen);
+          idx += replaced.length;
+        } else {
+          idx = closeParen;
+        }
+      }
+      return str;
+    }
+
+    let js = source;
+    js = js.replace(/\/\/[^\n]*/g, '');
+    js = js.replace(/\/\*[\s\S]*?\*\//g, '');
+    js = js.replace(/import\s+['"][^'"]+['"];?/g, '');
+
+    js = replaceCall(js, 'print', function(args) {
+      if (!args || !args.trim()) return '__poly_out("\\n");';
+      return `__poly_out((${args}) + "\\n");`;
+    });
+
+    js = js.replace(/(?:void|int|double|String|bool|dynamic|Future<[^>]*>|[A-Za-z0-9_<>[\]]+)\s+([A-Za-z_]\w*)\s*\(([^)]*)\)\s*\{/g, function(_, name, rawParams) {
+      const cleanParams = (rawParams || '').split(',').map(p => {
+        const parts = p.trim().split(/\s+/);
+        return parts[parts.length - 1];
+      }).filter(Boolean).join(', ');
+      return `function ${name}(${cleanParams}) {`;
+    });
+
+    js = js.replace(/\b(?:var|final|const|int|double|String|bool|List<[^>]*>|Map<[^>]*>)\s+([A-Za-z_]\w*)(?:\s*:\s*[^=;]+)?\s*=/g, 'let $1 =');
+    js = js.replace(/\.where\s*\(/g, '.filter(');
+    js = js.replace(/\.fold\s*\(\s*([^,]+)\s*,\s*\(([^)]+)\)\s*=>/g, '.reduce(($2) =>');
+    js = js.replace(/\.length\b/g, '.length');
+    js = js.replace(/\.sort\(\)/g, '.sort((a, b) => a - b)');
+
+    if (stdin && stdin.trim()) {
+      post({ id: requestId, type: 'STDOUT', chunk: `[stdin: ${stdin.trim()}]\n` });
+    }
+
+    const runner = new Function('__poly_out', js + '\nif (typeof main === "function") { main(); }');
+    runner(function(chunk) {
+      post({ id: requestId, type: 'STDOUT', chunk: String(chunk) });
+    });
+
+    const elapsed = Math.round(performance.now() - startTime);
+    post({
+      id: requestId,
+      type: 'COMPLETED',
+      exitCode: 0,
+      durationMs: elapsed
+    });
   } catch (err) {
     post({ id: requestId, type: 'STDERR', chunk: 'Dart Runtime Error: ' + err.message + '\n' });
     post({

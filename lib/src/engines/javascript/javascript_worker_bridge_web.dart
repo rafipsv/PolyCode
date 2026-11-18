@@ -39,10 +39,18 @@ class WebJavaScriptWorkerBridge implements JavaScriptWorkerBridge {
 
     worker.onmessage = ((web.MessageEvent event) {
       final rawData = event.data;
-      final jsonString = rawData.dartify()?.toString();
-      if (jsonString != null) {
+      final dartData = rawData.dartify();
+      Map<String, dynamic>? data;
+      if (dartData is String) {
         try {
-          final data = jsonDecode(jsonString) as Map<String, dynamic>;
+          data = jsonDecode(dartData) as Map<String, dynamic>;
+        } catch (_) {}
+      } else if (dartData is Map) {
+        data = dartData.map((k, v) => MapEntry(k.toString(), v));
+      }
+
+      if (data != null) {
+        try {
           final type = data['type'] as String?;
           if (type == 'STDOUT') {
             controller

@@ -59,7 +59,6 @@ self.onmessage = async function(event) {
         return;
       }
 
-      // Check braces balance
       const openBraces = (source.match(/\{/g) || []).length;
       const closeBraces = (source.match(/\}/g) || []).length;
       if (openBraces !== closeBraces) {
@@ -89,80 +88,133 @@ self.onmessage = async function(event) {
       return;
     }
 
-    if (type === 'EXECUTE') {
-      post({ id: requestId, type: 'STDOUT', chunk: 'Compiling Go code (GOOS=js GOARCH=wasm)...\n' });
-
-      if (!source.includes('package main')) {
-        post({ id: requestId, type: 'STDERR', chunk: "main.go:1:1: package main: cannot build non-main package\n" });
-        post({
-          id: requestId,
-          type: 'COMPLETED',
-          exitCode: 1,
-          durationMs: Math.round(performance.now() - startTime),
-          error: 'Execution failed: package main required'
-        });
-        return;
-      }
-
-      if (!source.includes('func main')) {
-        post({ id: requestId, type: 'STDERR', chunk: "main.go:1:1: function main is undeclared in the main package\n" });
-        post({
-          id: requestId,
-          type: 'COMPLETED',
-          exitCode: 1,
-          durationMs: Math.round(performance.now() - startTime),
-          error: 'Execution failed: func main required'
-        });
-        return;
-      }
-
-      // Braces check
-      const openBraces = (source.match(/\{/g) || []).length;
-      const closeBraces = (source.match(/\}/g) || []).length;
-      if (openBraces !== closeBraces) {
-        post({ id: requestId, type: 'STDERR', chunk: `main.go:${source.split('\n').length}:1: syntax error: unexpected EOF, expected '}'\n` });
-        post({
-          id: requestId,
-          type: 'COMPLETED',
-          exitCode: 1,
-          durationMs: Math.round(performance.now() - startTime),
-          error: 'Execution failed: syntax error'
-        });
-        return;
-      }
-
-      // Evaluate fmt.Println / fmt.Printf matches
-      const printRegex = /fmt\.(?:Println|Printf|Print)\s*\(\s*(?:"([^"]*)")?(?:\s*,\s*([^)]*))?\s*\)/g;
-      let match;
-      let printed = false;
-
-      while ((match = printRegex.exec(source)) !== null) {
-        let text = match[1] || '';
-        if (match[2]) {
-          const args = match[2].split(',').map(s => s.trim());
-          for (const arg of args) {
-            text = text.replace(/%[dsvf]/, arg);
-          }
-        }
-        post({ id: requestId, type: 'STDOUT', chunk: text + '\n' });
-        printed = true;
-      }
-
-      if (stdin.trim().length > 0) {
-        post({ id: requestId, type: 'STDOUT', chunk: `[stdin processed: ${stdin.trim()}]\n` });
-      }
-
-      if (!printed) {
-        post({ id: requestId, type: 'STDOUT', chunk: 'Go program finished successfully.\n' });
-      }
-
+    // EXECUTE phase
+    if (!source.includes('package main')) {
+      post({ id: requestId, type: 'STDERR', chunk: "main.go:1:1: package main: cannot build non-main package\n" });
       post({
         id: requestId,
         type: 'COMPLETED',
-        exitCode: 0,
-        durationMs: Math.round(performance.now() - startTime)
+        exitCode: 1,
+        durationMs: Math.round(performance.now() - startTime),
+        error: 'Execution failed: package main required'
       });
+      return;
     }
+
+    function replaceCall(str, funcName, replacementFn) {
+      let idx = 0;
+      while ((idx = str.indexOf(funcName, idx)) !== -1) {
+        let openParen = str.indexOf("(", idx + funcName.length);
+        if (openParen === -1) break;
+        let depth = 1;
+        let closeParen = openParen + 1;
+        while (closeParen < str.length && depth > 0) {
+          if (str[closeParen] === "(") depth++;
+          else if (str[closeParen] === ")") depth--;
+          closeParen++;
+        }
+        if (depth === 0) {
+          let args = str.substring(openParen + 1, closeParen - 1);
+          let endSemi = str.indexOf(";", closeParen - 1);
+          let replaceLen = (endSemi !== -1 && endSemi <= closeParen + 1) ? (endSemi + 1 - idx) : (closeParen - idx);
+          let replaced = replacementFn(args);
+          str = str.substring(0, idx) + replaced + str.substring(idx + replaceLen);
+          idx += replaced.length;
+        } else {
+          idx = closeParen;
+        }
+      }
+      return str;
+    }
+
+    let js = source;
+    js = js.replace(/\/\/[^\n]*/g, '');
+    js = js.replace(/\/\*[\s\S]*?\*\//g, '');
+    js = js.replace(/package\s+main/g, '');
+    js = js.replace(/import\s*\([^)]*\)/g, '');
+    js = js.replace(/import\s+"[^"]+"/g, '');
+
+    js = replaceCall(js, 'fmt.Println', function(args) {
+      if (!args || !args.trim()) return '__poly_out("\\n");';
+      return `__poly_out([${args}].join(" ") + "\\n");`;
+    });
+
+    js = replaceCall(js, 'fmt.Printf', function(argsStr) {
+      const commaIdx = argsStr.indexOf(',');
+      if (commaIdx === -1) {
+        return `__poly_out(${argsStr}.replace(/\\\\n/g, '\\n'));`;
+      }
+      const fmt = argsStr.substring(0, commaIdx).trim();
+      const rest = argsStr.substring(commaIdx + 1).trim();
+      return `__poly_out((function(f, ...args) {
+        let p = f.split(/%[0-9]*\\.?[0-9]*[dvstf%]/);
+        let out = '';
+        p.forEach(function(part, idx) {
+          out += part;
+          if (idx < args.length) out += args[idx];
+        });
+        return out.replace(/\\\\n/g, '\\n');
+      })(${fmt}, ${rest}));`;
+    });
+
+    js = js.replace(/func\s+([A-Za-z_]\w*)\s*\((.*?)\)(?:\s*(?:\([^)]*\)|[A-Za-z0-9_\[\]]+))?\s*\{/g, function(_, name, rawParams) {
+      const cleanParams = (rawParams || '').split(',').map(p => {
+        p = p.trim();
+        const parts = p.split(/\s+/);
+        return parts[0];
+      }).filter(Boolean).join(', ');
+      return `function ${name}(${cleanParams}) {`;
+    });
+
+    js = js.replace(/(?:\[\]|\[\d*\])[A-Za-z0-9_.]+\s*\{([^}]*)\}/g, '[$1]');
+    js = js.replace(/([A-Za-z0-9_\[\]\s.+-]+),\s*([A-Za-z0-9_\[\]\s.+-]+)\s*=\s*([A-Za-z0-9_\[\]\s.+-]+),\s*([A-Za-z0-9_\[\]\s.+-]+);?/g, '[$1, $2] = [$3, $4];');
+
+    js = js.replace(/for\s+([A-Za-z0-9_,\s]+)\s*:=\s*range\s+([^{]+)\s*\{/g, function(_, vars, expr) {
+      const parts = vars.split(',').map(v => v.trim());
+      if (parts.length === 2) {
+        return `for (let ${parts[0]} = 0; ${parts[0]} < (${expr}).length; ${parts[0]}++) { let ${parts[1]} = (${expr})[${parts[0]}];`;
+      }
+      return `for (let ${parts[0]} = 0; ${parts[0]} < (${expr}).length; ${parts[0]}++) {`;
+    });
+
+    js = js.replace(/for\s+([^{;]+);([^{;]+);([^{]+)\s*\{/g, function(_, init, cond, post) {
+      init = init.replace(/([A-Za-z_]\w*)\s*:=/g, 'let $1 =');
+      if (!init.includes('let ') && !init.includes('var ')) init = 'let ' + init;
+      return `for (${init.trim()}; ${cond.trim()}; ${post.trim()}) {`;
+    });
+
+    js = js.replace(/for\s+([^;{]+)\s*\{/g, function(_, cond) {
+      cond = cond.trim();
+      if (cond.startsWith('(') && cond.endsWith(')')) return `while ${cond} {`;
+      return `while (${cond}) {`;
+    });
+
+    js = js.replace(/\bif\s+([^{]+)\s*\{/g, function(_, cond) {
+      cond = cond.trim();
+      if (cond.startsWith('(') && cond.endsWith(')')) return `if ${cond} {`;
+      return `if (${cond}) {`;
+    });
+
+    js = js.replace(/\bvar\s+([A-Za-z_]\w*)(?:\s+[A-Za-z0-9_\[\]]+)?\s*=/g, 'let $1 =');
+    js = js.replace(/\b([A-Za-z_]\w*)\s*:=/g, 'let $1 =');
+    js = js.replace(/\blen\s*\(/g, '((x) => x.length)(');
+
+    if (stdin && stdin.trim()) {
+      post({ id: requestId, type: 'STDOUT', chunk: `[stdin: ${stdin.trim()}]\n` });
+    }
+
+    const runner = new Function('__poly_out', js + '\nif (typeof main === "function") { main(); }');
+    runner(function(chunk) {
+      post({ id: requestId, type: 'STDOUT', chunk: String(chunk) });
+    });
+
+    const elapsed = Math.round(performance.now() - startTime);
+    post({
+      id: requestId,
+      type: 'COMPLETED',
+      exitCode: 0,
+      durationMs: elapsed
+    });
   } catch (err) {
     post({ id: requestId, type: 'STDERR', chunk: 'Go Runtime Error: ' + err.message + '\n' });
     post({
