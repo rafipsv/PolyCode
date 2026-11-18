@@ -19,9 +19,13 @@ void main() {
       expect(capabilities.languages.length, equals(9));
       expect(polycode.isEngineAvailable(PolyLanguage.javascript), isTrue);
       expect(polycode.isEngineAvailable(PolyLanguage.python), isTrue);
+      expect(polycode.isEngineAvailable(PolyLanguage.c), isTrue);
+      expect(polycode.isEngineAvailable(PolyLanguage.cpp), isTrue);
       expect(
           capabilities.availableLanguages, contains(PolyLanguage.javascript));
       expect(capabilities.availableLanguages, contains(PolyLanguage.python));
+      expect(capabilities.availableLanguages, contains(PolyLanguage.c));
+      expect(capabilities.availableLanguages, contains(PolyLanguage.cpp));
     });
 
     test('respects autoRegisterDefaults false', () {

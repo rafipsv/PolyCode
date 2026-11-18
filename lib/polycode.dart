@@ -13,6 +13,9 @@ export 'src/core/polycode_config.dart';
 export 'src/core/polycode_facade.dart';
 
 // Engines
+export 'src/engines/c_cpp/c_engine.dart';
+export 'src/engines/c_cpp/clang_diagnostic_parser.dart';
+export 'src/engines/c_cpp/cpp_engine.dart';
 export 'src/engines/javascript/javascript_engine.dart';
 export 'src/engines/polycode_compiler_engine.dart';
 export 'src/engines/polycode_engine.dart';

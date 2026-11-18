@@ -1,3 +1,5 @@
+import '../engines/c_cpp/c_engine.dart';
+import '../engines/c_cpp/cpp_engine.dart';
 import '../engines/javascript/javascript_engine.dart';
 import '../engines/polycode_engine.dart';
 import '../engines/python/python_engine.dart';
@@ -33,6 +35,8 @@ class PolyCode {
     if (autoRegisterDefaults) {
       registerEngine(JavaScriptEngine());
       registerEngine(PythonEngine());
+      registerEngine(CEngine());
+      registerEngine(CppEngine());
     }
   }
 

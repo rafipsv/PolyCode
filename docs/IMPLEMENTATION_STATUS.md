@@ -6,7 +6,7 @@
 | **Phase 1** | Pub.dev Core Package Foundation | Completed | Public API, registries, execution manager, tests passing. |
 | **Phase 2** | JavaScript Browser Engine | Completed | Web Worker sandboxed runner, stdout/stderr streaming, stdin support, 31 tests passing. |
 | **Phase 3** | Python Browser Engine | Completed | MicroPython / Pyodide Web Worker runner, stdin/stdout/stderr streaming, 38 tests passing. |
-| **Phase 4** | C and C++ Web Compilation | Planned | LLVM/Clang WASM toolchain. |
+| **Phase 4** | C and C++ Web Compilation | Completed | Clang/LLVM compilation engine, structured diagnostics parser, artifact caching, 48 tests passing. |
 | **Phase 5** | Playground MVP | Planned | First Flutter Web UI with BLoC. |
 | **Phase 6** | Three Workspace Layouts | Planned | Competitive, Code Block, and IDE layouts. |
 | **Phase 7** | Theme System & Preferences | Planned | Dark/Light tokens and persistent preferences. |
