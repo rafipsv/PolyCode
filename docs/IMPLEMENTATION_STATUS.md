@@ -10,7 +10,7 @@
 | **Phase 5** | Playground MVP | Completed | Flutter Web UI with BLoC, responsive split view, dark/light theme, live execution runner, 51 tests passing. |
 | **Phase 6** | Three Workspace Layouts | Completed | Competitive Programming (test case runner), Code Block (embeddable snippet card), VS Code-style IDE (multi-file virtual workspace, tabs, problems panel), state preservation across layout switches, 58 tests passing. |
 | **Phase 7** | Theme System & Preferences | Completed | Centralized ThemeExtension tokens (Dark, Light, High Contrast A11y), SyntaxHighlighterEditingController, persistent preferences storage (localStorage/in-memory), 66 tests passing. |
-| **Phase 8** | Rust & Go Browser Engines | Planned | wasm32 / js/wasm investigations. |
+| **Phase 8** | Rust & Go Browser Engines | Completed | Rust (wasm32) and Go (js/wasm) compiler engines, structured diagnostics parsers, Web Worker scripts, 80 tests passing. |
 | **Phase 9** | Java & Kotlin Feasibility | Planned | JVM/WASM spike. |
 | **Phase 10** | Dart Source Execution | Planned | In-browser standalone evaluator spike. |
 | **Phase 11** | Polish & Accessibility | Planned | Lazy loading, screen reader compliance, offline cache. |

@@ -79,10 +79,9 @@ class SyntaxHighlighterEditingController extends TextEditingController {
     r"'(?:\\.|[^'\\])*'|`[^\`]*`|\b\d+(?:\.\d+)?\b|"
     r'\b(?:def|class|if|elif|else|while|for|in|return|break|continue|try|'
     r'except|finally|with|as|import|from|lambda|yield|pass|raise|assert|'
-    r'True|False|None|function|const|let|var|switch|case|default|throw|'
-    r'new|this|async|await|int|char|float|double|void|bool|struct|'
-    r'namespace|using|public|private|protected|virtual|override|auto|'
-    r'include|cout|cin|endl)\b)',
+    r'function|const|let|var|switch|case|default|throw|new|this|async|'
+    r'await|int|char|float|double|void|bool|struct|namespace|using|'
+    r'fn|mut|pub|impl|trait|match|package|func|go|defer|chan)\b)',
   );
 
   static const _keywords = {
@@ -90,9 +89,11 @@ class SyntaxHighlighterEditingController extends TextEditingController {
     'break', 'continue', 'try', 'except', 'finally', 'with', 'as', 'import',
     'from', 'lambda', 'yield', 'pass', 'raise', 'assert', 'function', 'const',
     'let', 'var', 'switch', 'case', 'default', 'throw', 'new', 'this', 'async',
-    'await', 'struct', 'namespace', 'using', 'public', 'private', 'virtual',
+    'await', 'struct', 'namespace', 'using', 'fn', 'mut', 'pub', 'impl',
+    'trait', 'match', 'package', 'func', 'go', 'defer', 'chan'
   };
   static const _types = {
-    'int', 'char', 'float', 'double', 'void', 'bool', 'auto', 'size_t', 'string'
+    'int', 'char', 'float', 'double', 'void', 'bool', 'auto', 'size_t', 'string',
+    'i32', 'i64', 'u32', 'u64', 'usize', 'isize', 'f32', 'f64'
   };
 }

@@ -21,11 +21,15 @@ void main() {
       expect(polycode.isEngineAvailable(PolyLanguage.python), isTrue);
       expect(polycode.isEngineAvailable(PolyLanguage.c), isTrue);
       expect(polycode.isEngineAvailable(PolyLanguage.cpp), isTrue);
+      expect(polycode.isEngineAvailable(PolyLanguage.rust), isTrue);
+      expect(polycode.isEngineAvailable(PolyLanguage.go), isTrue);
       expect(
           capabilities.availableLanguages, contains(PolyLanguage.javascript));
       expect(capabilities.availableLanguages, contains(PolyLanguage.python));
       expect(capabilities.availableLanguages, contains(PolyLanguage.c));
       expect(capabilities.availableLanguages, contains(PolyLanguage.cpp));
+      expect(capabilities.availableLanguages, contains(PolyLanguage.rust));
+      expect(capabilities.availableLanguages, contains(PolyLanguage.go));
     });
 
     test('respects autoRegisterDefaults false', () {

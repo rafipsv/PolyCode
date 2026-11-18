@@ -37,5 +37,28 @@ int main() {
     return 0;
 }
 ''',
+    PolyLanguage.rust: '''// PolyCode Rust Runner
+fn main() {
+    println!("Hello from PolyCode Rust!");
+    let nums = vec![1, 2, 3, 4, 5];
+    let sum: i32 = nums.iter().sum();
+    println!("Sum of numbers: {}", sum);
+}
+''',
+    PolyLanguage.go: '''// PolyCode Go Runner
+package main
+
+import "fmt"
+
+func main() {
+    fmt.Println("Hello from PolyCode Go!")
+    nums := []int{1, 2, 3, 4, 5}
+    sum := 0
+    for _, n := range nums {
+        sum += n
+    }
+    fmt.Printf("Sum of numbers: %d\\n", sum)
+}
+''',
   };
 }

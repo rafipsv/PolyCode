@@ -1,8 +1,10 @@
 import '../engines/c_cpp/c_engine.dart';
 import '../engines/c_cpp/cpp_engine.dart';
+import '../engines/go/go_engine.dart';
 import '../engines/javascript/javascript_engine.dart';
 import '../engines/polycode_engine.dart';
 import '../engines/python/python_engine.dart';
+import '../engines/rust/rust_engine.dart';
 import '../models/compilation_result.dart';
 import '../models/execution_event.dart';
 import '../models/execution_request.dart';
@@ -37,6 +39,8 @@ class PolyCode {
       registerEngine(PythonEngine());
       registerEngine(CEngine());
       registerEngine(CppEngine());
+      registerEngine(RustEngine());
+      registerEngine(GoEngine());
     }
   }
 
