@@ -1,3 +1,4 @@
+import '../engines/javascript/javascript_engine.dart';
 import '../engines/polycode_engine.dart';
 import '../models/compilation_result.dart';
 import '../models/execution_event.dart';
@@ -19,6 +20,7 @@ class PolyCode {
   PolyCode({
     PolyCodeConfig? config,
     PolyPlatform? platform,
+    bool autoRegisterDefaults = true,
   })  : config = config ?? const PolyCodeConfig(),
         platform = platform ?? PolyPlatform.current {
     languageRegistry = LanguageRegistry(platform: this.platform);
@@ -27,6 +29,9 @@ class PolyCode {
       engineRegistry: engineRegistry,
       languageRegistry: languageRegistry,
     );
+    if (autoRegisterDefaults) {
+      registerEngine(JavaScriptEngine());
+    }
   }
 
   final PolyCodeConfig config;

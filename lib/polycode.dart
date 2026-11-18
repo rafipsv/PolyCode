@@ -13,6 +13,7 @@ export 'src/core/polycode_config.dart';
 export 'src/core/polycode_facade.dart';
 
 // Engines
+export 'src/engines/javascript/javascript_engine.dart';
 export 'src/engines/polycode_compiler_engine.dart';
 export 'src/engines/polycode_engine.dart';
 

@@ -14,11 +14,17 @@ void main() {
       await polycode.dispose();
     });
 
-    test('initializes with platform capabilities and no available engines', () {
+    test('initializes with platform capabilities and default javascript engine', () {
       final capabilities = polycode.getPlatformCapabilities();
       expect(capabilities.languages.length, equals(9));
-      expect(capabilities.availableLanguages, isEmpty);
-      expect(polycode.isEngineAvailable(PolyLanguage.javascript), isFalse);
+      expect(polycode.isEngineAvailable(PolyLanguage.javascript), isTrue);
+      expect(capabilities.availableLanguages, contains(PolyLanguage.javascript));
+    });
+
+    test('respects autoRegisterDefaults false', () {
+      final barePolycode = PolyCode(autoRegisterDefaults: false);
+      expect(barePolycode.getPlatformCapabilities().availableLanguages, isEmpty);
+      expect(barePolycode.isEngineAvailable(PolyLanguage.javascript), isFalse);
     });
 
     test('registering engine activates language in capabilities', () {
