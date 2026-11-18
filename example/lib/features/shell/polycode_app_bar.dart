@@ -68,47 +68,50 @@ class PolyCodeAppBar extends StatelessWidget implements PreferredSizeWidget {
             // Workspace Layout Selector
             BlocBuilder<LayoutBloc, LayoutState>(
               builder: (context, layoutState) {
-                return Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (layoutState.activeLayout == WorkspaceLayout.ide)
-                      IconButton(
-                        icon: const Icon(Icons.view_sidebar_outlined, size: 18),
-                        tooltip: 'Toggle File Explorer',
-                        onPressed: () {
-                          context.read<LayoutBloc>().add(const ToggleSidebar());
-                        },
+                return Semantics(
+                  label: 'Workspace Layout Selector',
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (layoutState.activeLayout == WorkspaceLayout.ide)
+                        IconButton(
+                          icon: const Icon(Icons.view_sidebar_outlined, size: 18),
+                          tooltip: 'Toggle File Explorer',
+                          onPressed: () {
+                            context.read<LayoutBloc>().add(const ToggleSidebar());
+                          },
+                        ),
+                      DropdownButtonHideUnderline(
+                        child: DropdownButton<WorkspaceLayout>(
+                          value: layoutState.activeLayout,
+                          dropdownColor: tokens.panelBackground,
+                          items: WorkspaceLayout.values.map((layout) {
+                            return DropdownMenuItem(
+                              value: layout,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(layout.icon, size: 16, color: tokens.primaryText),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    layout.displayName,
+                                    style: TextStyle(fontSize: 13, color: tokens.primaryText),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (layout) {
+                            if (layout != null) {
+                              context
+                                  .read<LayoutBloc>()
+                                  .add(SwitchLayout(layout));
+                            }
+                          },
+                        ),
                       ),
-                    DropdownButtonHideUnderline(
-                      child: DropdownButton<WorkspaceLayout>(
-                        value: layoutState.activeLayout,
-                        dropdownColor: tokens.panelBackground,
-                        items: WorkspaceLayout.values.map((layout) {
-                          return DropdownMenuItem(
-                            value: layout,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(layout.icon, size: 16, color: tokens.primaryText),
-                                const SizedBox(width: 6),
-                                Text(
-                                  layout.displayName,
-                                  style: TextStyle(fontSize: 13, color: tokens.primaryText),
-                                ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                        onChanged: (layout) {
-                          if (layout != null) {
-                            context
-                                .read<LayoutBloc>()
-                                .add(SwitchLayout(layout));
-                          }
-                        },
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 );
               },
             ),
@@ -117,50 +120,53 @@ class PolyCodeAppBar extends StatelessWidget implements PreferredSizeWidget {
             // Language Selector
             BlocBuilder<EditorBloc, EditorState>(
               builder: (context, editorState) {
-                return DropdownButtonHideUnderline(
-                  child: DropdownButton<PolyLanguage>(
-                    value: editorState.language,
-                    dropdownColor: tokens.panelBackground,
-                    items: PolyLanguage.values.map((lang) {
-                      final isRunnable = polycode.isEngineAvailable(lang);
-                      return DropdownMenuItem(
-                        value: lang,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              lang.displayName,
-                              style: TextStyle(color: tokens.primaryText),
-                            ),
-                            const SizedBox(width: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: isRunnable
-                                    ? Colors.green.withValues(alpha: 0.2)
-                                    : Colors.orange.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(4),
+                return Semantics(
+                  label: 'Language Selector',
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<PolyLanguage>(
+                      value: editorState.language,
+                      dropdownColor: tokens.panelBackground,
+                      items: PolyLanguage.values.map((lang) {
+                        final isRunnable = polycode.isEngineAvailable(lang);
+                        return DropdownMenuItem(
+                          value: lang,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                lang.displayName,
+                                style: TextStyle(color: tokens.primaryText),
                               ),
-                              child: Text(
-                                isRunnable ? 'Ready' : 'Planned',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color:
-                                      isRunnable ? Colors.green : Colors.orange,
-                                  fontWeight: FontWeight.bold,
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: isRunnable
+                                      ? Colors.green.withValues(alpha: 0.2)
+                                      : Colors.orange.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  isRunnable ? 'Ready' : 'Planned',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color:
+                                        isRunnable ? Colors.green : Colors.orange,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (lang) {
-                      if (lang != null) {
-                        context.read<EditorBloc>().add(LanguageChanged(lang));
-                      }
-                    },
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (lang) {
+                        if (lang != null) {
+                          context.read<EditorBloc>().add(LanguageChanged(lang));
+                        }
+                      },
+                    ),
                   ),
                 );
               },
@@ -171,34 +177,42 @@ class PolyCodeAppBar extends StatelessWidget implements PreferredSizeWidget {
             BlocBuilder<ExecutionBloc, ExecutionBlocState>(
               builder: (context, execState) {
                 if (execState.isRunning) {
-                  return IconButton.filled(
-                    onPressed: () {
-                      context.read<ExecutionBloc>().add(const StopRequested());
-                    },
-                    icon: const Icon(Icons.stop),
-                    style: IconButton.styleFrom(
-                      backgroundColor: tokens.error,
+                  return Semantics(
+                    button: true,
+                    label: 'Stop Execution',
+                    child: IconButton.filled(
+                      onPressed: () {
+                        context.read<ExecutionBloc>().add(const StopRequested());
+                      },
+                      icon: const Icon(Icons.stop),
+                      style: IconButton.styleFrom(
+                        backgroundColor: tokens.error,
+                      ),
+                      tooltip: 'Stop execution',
                     ),
-                    tooltip: 'Stop execution',
                   );
                 }
 
-                return ElevatedButton.icon(
-                  onPressed: () {
-                    final editorState = context.read<EditorBloc>().state;
-                    context.read<ExecutionBloc>().add(
-                          ExecuteRequested(
-                            language: editorState.language,
-                            source: editorState.source,
-                          ),
-                        );
-                  },
-                  icon: const Icon(Icons.play_arrow, size: 18),
-                  label: const Text('Run'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: tokens.accent,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                return Semantics(
+                  button: true,
+                  label: 'Run Code in Local Sandbox (Ctrl+Enter or Cmd+Enter)',
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      final editorState = context.read<EditorBloc>().state;
+                      context.read<ExecutionBloc>().add(
+                            ExecuteRequested(
+                              language: editorState.language,
+                              source: editorState.source,
+                            ),
+                          );
+                    },
+                    icon: const Icon(Icons.play_arrow, size: 18),
+                    label: const Text('Run'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: tokens.accent,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                    ),
                   ),
                 );
               },
@@ -206,12 +220,16 @@ class PolyCodeAppBar extends StatelessWidget implements PreferredSizeWidget {
             const SizedBox(width: 4),
 
             // Clear Output
-            IconButton(
-              icon: const Icon(Icons.delete_outline, size: 20),
-              tooltip: 'Clear Output',
-              onPressed: () {
-                context.read<ExecutionBloc>().add(const ClearOutputRequested());
-              },
+            Semantics(
+              button: true,
+              label: 'Clear Output and Terminal',
+              child: IconButton(
+                icon: const Icon(Icons.delete_outline, size: 20),
+                tooltip: 'Clear Output',
+                onPressed: () {
+                  context.read<ExecutionBloc>().add(const ClearOutputRequested());
+                },
+              ),
             ),
 
             // Theme Preset & Mode Selector Menu

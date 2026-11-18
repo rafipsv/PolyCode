@@ -12,4 +12,4 @@ This matrix tracks the candidate runtimes, technical directions, and feasibility
 | **Go** | Go compiler js/wasm target | BSD-3-Clause | Yes | ~25 - 40 MB | Available (Phase 8) | Official Go wasm target + wasm_exec glue layer. |
 | **Java** | JVM WASM / Compiler toolchain | GPLv2 with Classpath / Apache | Yes | ~15 - 40 MB | Available (Phase 9) | Host javac/java + browser Web Worker JVM bytecode execution. |
 | **Kotlin** | Kotlin/Wasm or Kotlin/JVM | Apache 2.0 | Yes | ~5 - 35 MB | Available (Phase 9) | Host kotlinc/java + Kotlin/Wasm browser Web Worker execution. |
-| **Dart** | Standalone Dart evaluator | BSD-3-Clause | Investigation | Variable | Planned (Phase 10) | Requires separate evaluator from host Flutter runtime. |
+| **Dart** | Standalone Dart evaluator | BSD-3-Clause | Yes | ~5 - 15 MB | Available (Phase 10) | Host Dart VM execution + Web Worker sandboxed runner. |

@@ -1,0 +1,70 @@
+name: Deploy PolyCode Web Playground to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: 'pages'
+  cancel-in-progress: true
+
+jobs:
+  test_and_deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java (for Java engine host support)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install Root Dependencies
+        run: flutter pub get
+
+      - name: Run Root Package Unit Tests
+        run: flutter test
+
+      - name: Install Example Playground Dependencies
+        run: |
+          cd example
+          flutter pub get
+
+      - name: Run Example Playground Tests
+        run: |
+          cd example
+          flutter test
+
+      - name: Build Flutter Web Release Bundle
+        run: |
+          cd example
+          flutter build web --release --base-href "/PolyCode/"
+          touch build/web/.nojekyll
+
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload GitHub Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: example/build/web
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,5 +1,6 @@
 import '../engines/c_cpp/c_engine.dart';
 import '../engines/c_cpp/cpp_engine.dart';
+import '../engines/dart/dart_engine.dart';
 import '../engines/go/go_engine.dart';
 import '../engines/java/java_engine.dart';
 import '../engines/javascript/javascript_engine.dart';
@@ -45,6 +46,7 @@ class PolyCode {
       registerEngine(GoEngine());
       registerEngine(JavaEngine());
       registerEngine(KotlinEngine());
+      registerEngine(DartEngine());
     }
   }
 

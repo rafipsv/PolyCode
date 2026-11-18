@@ -12,8 +12,8 @@
 | **Phase 7** | Theme System & Preferences | Completed | Centralized ThemeExtension tokens (Dark, Light, High Contrast A11y), SyntaxHighlighterEditingController, persistent preferences storage (localStorage/in-memory), 66 tests passing. |
 | **Phase 8** | Rust & Go Browser Engines | Completed | Rust (wasm32) and Go (js/wasm) compiler engines, structured diagnostics parsers, Web Worker scripts, 80 tests passing. |
 | **Phase 9** | Java & Kotlin Feasibility | Completed | Java & Kotlin engines, diagnostic parsers, Web Worker scripts, playground templates, tests passing. |
-| **Phase 10** | Dart Source Execution | Planned | In-browser standalone evaluator spike. |
-| **Phase 11** | Polish & Accessibility | Planned | Lazy loading, screen reader compliance, offline cache. |
-| **Phase 12** | GitHub Pages Deployment | Planned | CI/CD pipeline for live web preview. |
-| **Phase 13** | Pub.dev Release | Planned | Documentation, score checks, formal tagging. |
-| **Phase 14** | Future Android App | Out of Scope | Deferred until Web Playground is stable. |
+| **Phase 10** | Dart Source Execution | Completed | Host Dart VM & Web Worker runner, diagnostic parser, templates, 83 tests passing. |
+| **Phase 11** | Polish & Accessibility | Completed | Semantics coverage, screen reader announcements, offline service worker, PWA manifest, 21 example tests. |
+| **Phase 12** | GitHub Pages Deployment | Completed | GitHub Actions deploy workflow, build_web.sh, release web bundle built, .nojekyll. |
+| **Phase 13** | Pub.dev Release Readiness | Completed | README, CHANGELOG, LICENSE, attribution, dart pub publish --dry-run verified (92 KB archive). |
+| **Phase 14** | Future Android App | Out of Scope / Planned | Deferred until Web Playground is stable (as specified in implementation spec). |

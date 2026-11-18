@@ -81,5 +81,13 @@ fun main() {
     println("Sum of numbers: " + sum);
 }
 ''',
+    PolyLanguage.dart: '''// PolyCode Dart Runner
+void main() {
+  print("Hello from PolyCode Dart!");
+  final nums = [1, 2, 3, 4, 5];
+  final sum = nums.reduce((a, b) => a + b);
+  print("Sum of numbers: \$sum");
+}
+''',
   };
 }

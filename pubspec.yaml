@@ -1,6 +1,6 @@
 name: polycode
 description: A modular, local-first code execution and compilation engine for Dart and Flutter with no backend.
-version: 0.1.0-dev.1
+version: 0.1.0
 homepage: https://github.com/rafipsv/PolyCode
 repository: https://github.com/rafipsv/PolyCode
 issue_tracker: https://github.com/rafipsv/PolyCode/issues

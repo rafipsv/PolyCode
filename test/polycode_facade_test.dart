@@ -25,6 +25,7 @@ void main() {
       expect(polycode.isEngineAvailable(PolyLanguage.go), isTrue);
       expect(polycode.isEngineAvailable(PolyLanguage.java), isTrue);
       expect(polycode.isEngineAvailable(PolyLanguage.kotlin), isTrue);
+      expect(polycode.isEngineAvailable(PolyLanguage.dart), isTrue);
       expect(
           capabilities.availableLanguages, contains(PolyLanguage.javascript));
       expect(capabilities.availableLanguages, contains(PolyLanguage.python));
@@ -34,6 +35,7 @@ void main() {
       expect(capabilities.availableLanguages, contains(PolyLanguage.go));
       expect(capabilities.availableLanguages, contains(PolyLanguage.java));
       expect(capabilities.availableLanguages, contains(PolyLanguage.kotlin));
+      expect(capabilities.availableLanguages, contains(PolyLanguage.dart));
     });
 
     test('respects autoRegisterDefaults false', () {

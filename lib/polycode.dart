@@ -16,6 +16,8 @@ export 'src/core/polycode_facade.dart';
 export 'src/engines/c_cpp/c_engine.dart';
 export 'src/engines/c_cpp/clang_diagnostic_parser.dart';
 export 'src/engines/c_cpp/cpp_engine.dart';
+export 'src/engines/dart/dart_diagnostic_parser.dart';
+export 'src/engines/dart/dart_engine.dart';
 export 'src/engines/go/go_diagnostic_parser.dart';
 export 'src/engines/go/go_engine.dart';
 export 'src/engines/java/java_diagnostic_parser.dart';
