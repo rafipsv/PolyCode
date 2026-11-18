@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:polycode/polycode.dart';
 import 'core/theme/polycode_theme.dart';
+import 'features/competitive/bloc/competitive_bloc.dart';
 import 'features/editor/bloc/editor_bloc.dart';
 import 'features/execution/bloc/execution_bloc.dart';
+import 'features/ide/bloc/ide_workspace_bloc.dart';
+import 'features/layouts/bloc/layout_bloc.dart';
 import 'features/shell/polycode_shell.dart';
 import 'features/themes/bloc/theme_bloc.dart';
 
@@ -39,8 +42,11 @@ class _PolyCodeAppState extends State<PolyCodeApp> {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => ThemeBloc()),
+        BlocProvider(create: (_) => LayoutBloc()),
         BlocProvider(create: (_) => EditorBloc()),
         BlocProvider(create: (_) => ExecutionBloc(polycode: _polycode)),
+        BlocProvider(create: (_) => CompetitiveBloc(polycode: _polycode)),
+        BlocProvider(create: (_) => IdeWorkspaceBloc()),
       ],
       child: BlocBuilder<ThemeBloc, ThemeState>(
         builder: (context, themeState) {

@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:polycode/polycode.dart';
-import '../editor/widgets/code_editor_panel.dart';
-import '../execution/widgets/console_panel.dart';
+import '../layouts/bloc/layout_bloc.dart';
+import '../layouts/models/workspace_layout.dart';
+import '../layouts/views/code_block_layout_view.dart';
+import '../layouts/views/competitive_layout_view.dart';
+import '../layouts/views/ide_layout_view.dart';
 import 'polycode_app_bar.dart';
 import 'status_bar.dart';
 
@@ -14,27 +18,16 @@ class PolyCodeShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PolyCodeAppBar(polycode: polycode),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final isDesktop = constraints.maxWidth >= 768;
-
-          if (isDesktop) {
-            return const Row(
-              children: [
-                Expanded(flex: 3, child: CodeEditorPanel()),
-                VerticalDivider(width: 1),
-                Expanded(flex: 2, child: ConsolePanel()),
-              ],
-            );
+      body: BlocBuilder<LayoutBloc, LayoutState>(
+        builder: (context, state) {
+          switch (state.activeLayout) {
+            case WorkspaceLayout.competitive:
+              return const CompetitiveLayoutView();
+            case WorkspaceLayout.codeBlock:
+              return const CodeBlockLayoutView();
+            case WorkspaceLayout.ide:
+              return const IdeLayoutView();
           }
-
-          return const Column(
-            children: [
-              Expanded(flex: 3, child: CodeEditorPanel()),
-              Divider(height: 1),
-              Expanded(flex: 2, child: ConsolePanel()),
-            ],
-          );
         },
       ),
       bottomNavigationBar: StatusBar(polycode: polycode),

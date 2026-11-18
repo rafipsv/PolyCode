@@ -8,7 +8,7 @@
 | **Phase 3** | Python Browser Engine | Completed | MicroPython / Pyodide Web Worker runner, stdin/stdout/stderr streaming, 38 tests passing. |
 | **Phase 4** | C and C++ Web Compilation | Completed | Clang/LLVM compilation engine, structured diagnostics parser, artifact caching, 48 tests passing. |
 | **Phase 5** | Playground MVP | Completed | Flutter Web UI with BLoC, responsive split view, dark/light theme, live execution runner, 51 tests passing. |
-| **Phase 6** | Three Workspace Layouts | Planned | Competitive, Code Block, and IDE layouts. |
+| **Phase 6** | Three Workspace Layouts | Completed | Competitive Programming (test case runner), Code Block (embeddable snippet card), VS Code-style IDE (multi-file virtual workspace, tabs, problems panel), state preservation across layout switches, 58 tests passing. |
 | **Phase 7** | Theme System & Preferences | Planned | Dark/Light tokens and persistent preferences. |
 | **Phase 8** | Rust & Go Browser Engines | Planned | wasm32 / js/wasm investigations. |
 | **Phase 9** | Java & Kotlin Feasibility | Planned | JVM/WASM spike. |

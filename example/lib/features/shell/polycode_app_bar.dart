@@ -4,6 +4,8 @@ import 'package:polycode/polycode.dart';
 import '../../core/theme/polycode_theme.dart';
 import '../editor/bloc/editor_bloc.dart';
 import '../execution/bloc/execution_bloc.dart';
+import '../layouts/bloc/layout_bloc.dart';
+import '../layouts/models/workspace_layout.dart';
 import '../themes/bloc/theme_bloc.dart';
 
 class PolyCodeAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -19,33 +21,93 @@ class PolyCodeAppBar extends StatelessWidget implements PreferredSizeWidget {
     return BlocBuilder<ThemeBloc, ThemeState>(
       builder: (context, themeState) {
         return AppBar(
-          titleSpacing: 16,
-          title: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: PolyCodeTheme.accentColor.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Icon(
-                  Icons.terminal,
-                  color: PolyCodeTheme.accentColor,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 8),
-              const Flexible(
-                child: Text(
-                  'PolyCode',
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
+          titleSpacing: 8,
+          title: LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth < 40) {
+                return const SizedBox.shrink();
+              }
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(5),
+                    decoration: BoxDecoration(
+                      color: PolyCodeTheme.accentColor.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Icon(
+                      Icons.terminal,
+                      color: PolyCodeTheme.accentColor,
+                      size: 18,
+                    ),
+                  ),
+                  if (constraints.maxWidth >= 100) ...[
+                    const SizedBox(width: 8),
+                    const Flexible(
+                      child: Text(
+                        'PolyCode',
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              );
+            },
           ),
           actions: [
+            // Workspace Layout Selector
+            BlocBuilder<LayoutBloc, LayoutState>(
+              builder: (context, layoutState) {
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (layoutState.activeLayout == WorkspaceLayout.ide)
+                      IconButton(
+                        icon: const Icon(Icons.view_sidebar_outlined, size: 18),
+                        tooltip: 'Toggle File Explorer',
+                        onPressed: () {
+                          context.read<LayoutBloc>().add(const ToggleSidebar());
+                        },
+                      ),
+                    DropdownButtonHideUnderline(
+                      child: DropdownButton<WorkspaceLayout>(
+                        value: layoutState.activeLayout,
+                        items: WorkspaceLayout.values.map((layout) {
+                          return DropdownMenuItem(
+                            value: layout,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(layout.icon, size: 16),
+                                const SizedBox(width: 6),
+                                Text(
+                                  layout.displayName,
+                                  style: const TextStyle(fontSize: 13),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (layout) {
+                          if (layout != null) {
+                            context
+                                .read<LayoutBloc>()
+                                .add(SwitchLayout(layout));
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+            const SizedBox(width: 6),
+
             // Language Selector
             BlocBuilder<EditorBloc, EditorState>(
               builder: (context, editorState) {
@@ -93,7 +155,7 @@ class PolyCodeAppBar extends StatelessWidget implements PreferredSizeWidget {
                 );
               },
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
 
             // Run / Stop Actions
             BlocBuilder<ExecutionBloc, ExecutionBlocState>(
@@ -126,11 +188,12 @@ class PolyCodeAppBar extends StatelessWidget implements PreferredSizeWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: PolyCodeTheme.accentColor,
                     foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
                   ),
                 );
               },
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 4),
 
             // Clear Output
             IconButton(
@@ -152,7 +215,7 @@ class PolyCodeAppBar extends StatelessWidget implements PreferredSizeWidget {
                 context.read<ThemeBloc>().add(const ToggleThemeRequested());
               },
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 8),
           ],
         );
       },

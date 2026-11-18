@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:polycode/polycode.dart';
 import 'package:polycode_playground/core/theme/polycode_theme.dart';
+import 'package:polycode_playground/features/competitive/bloc/competitive_bloc.dart';
 import 'package:polycode_playground/features/editor/bloc/editor_bloc.dart';
 import 'package:polycode_playground/features/execution/bloc/execution_bloc.dart';
+import 'package:polycode_playground/features/ide/bloc/ide_workspace_bloc.dart';
+import 'package:polycode_playground/features/layouts/bloc/layout_bloc.dart';
 import 'package:polycode_playground/features/shell/polycode_shell.dart';
 import 'package:polycode_playground/features/themes/bloc/theme_bloc.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -49,8 +52,11 @@ void main() {
         MultiBlocProvider(
           providers: [
             BlocProvider(create: (_) => ThemeBloc()),
+            BlocProvider(create: (_) => LayoutBloc()),
             BlocProvider(create: (_) => EditorBloc()),
             BlocProvider(create: (_) => ExecutionBloc(polycode: polycode)),
+            BlocProvider(create: (_) => CompetitiveBloc(polycode: polycode)),
+            BlocProvider(create: (_) => IdeWorkspaceBloc()),
           ],
           child: MaterialApp(
             theme: PolyCodeTheme.darkTheme,
@@ -63,8 +69,8 @@ void main() {
 
       expect(find.textContaining('PolyCode'), findsWidgets);
       expect(find.byType(TextField), findsWidgets);
-      expect(find.textContaining('Output'), findsOneWidget);
-      expect(find.textContaining('Input (stdin)'), findsOneWidget);
+      expect(find.textContaining('OUTPUT / TERMINAL'), findsOneWidget);
+      expect(find.textContaining('INPUT (STDIN)'), findsOneWidget);
     });
   });
 }

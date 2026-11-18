@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:polycode/polycode.dart';
+import 'editor_templates.dart';
 
 sealed class EditorEvent {
   const EditorEvent();
@@ -30,43 +31,8 @@ class EditorState {
   final String source;
   final bool isDirty;
 
-  static const Map<PolyLanguage, String> defaultTemplates = {
-    PolyLanguage.javascript: '''// PolyCode JavaScript Runner
-console.log("Hello from PolyCode Web JavaScript!");
-const numbers = [1, 2, 3, 4, 5];
-const doubled = numbers.map(x => x * 2);
-console.log("Doubled numbers:", doubled);
-''',
-    PolyLanguage.python: '''# PolyCode Python Runner
-def greet(name):
-    return f"Hello, {name}! Welcome to PolyCode."
-
-print(greet("Developer"))
-total = sum([x**2 for x in range(1, 6)])
-print("Sum of squares:", total)
-''',
-    PolyLanguage.c: '''#include <stdio.h>
-
-int main() {
-    printf("Hello from PolyCode C!\\n");
-    int a = 10, b = 20;
-    printf("Result: %d + %d = %d\\n", a, b, a + b);
-    return 0;
-}
-''',
-    PolyLanguage.cpp: '''#include <iostream>
-#include <vector>
-#include <numeric>
-
-int main() {
-    std::cout << "Hello from PolyCode C++!" << std::endl;
-    std::vector<int> nums = {1, 2, 3, 4, 5};
-    int total = std::accumulate(nums.begin(), nums.end(), 0);
-    std::cout << "Sum of vector elements: " << total << std::endl;
-    return 0;
-}
-''',
-  };
+  static const Map<PolyLanguage, String> defaultTemplates =
+      EditorTemplates.defaults;
 
   EditorState copyWith({
     PolyLanguage? language,
@@ -86,7 +52,7 @@ class EditorBloc extends Bloc<EditorEvent, EditorState> {
       : super(
           EditorState(
             language: initialLanguage,
-            source: EditorState.defaultTemplates[initialLanguage] ?? '',
+            source: EditorTemplates.defaults[initialLanguage] ?? '',
           ),
         ) {
     on<SourceChanged>((event, emit) {
@@ -94,7 +60,7 @@ class EditorBloc extends Bloc<EditorEvent, EditorState> {
     });
 
     on<LanguageChanged>((event, emit) {
-      final template = EditorState.defaultTemplates[event.newLanguage] ??
+      final template = EditorTemplates.defaults[event.newLanguage] ??
           '// Write ${event.newLanguage.displayName} code here...\n';
       emit(
         state.copyWith(
@@ -106,7 +72,7 @@ class EditorBloc extends Bloc<EditorEvent, EditorState> {
     });
 
     on<ResetTemplateRequested>((event, emit) {
-      final template = EditorState.defaultTemplates[state.language] ?? '';
+      final template = EditorTemplates.defaults[state.language] ?? '';
       emit(state.copyWith(source: template, isDirty: false));
     });
   }
