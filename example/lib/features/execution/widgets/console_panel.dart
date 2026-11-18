@@ -28,26 +28,34 @@ class _ConsolePanelState extends State<ConsolePanel>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark
-        ? PolyCodeTheme.darkTerminalBackground
-        : PolyCodeTheme.lightTerminalBackground;
+    final tokens = context.polyTheme;
 
     return BlocBuilder<ExecutionBloc, ExecutionBlocState>(
       builder: (context, state) {
         return Container(
-          color: bg,
+          color: tokens.terminalBackground,
           child: Column(
             children: [
-              TabBar(
-                controller: _tabController,
-                isScrollable: true,
-                tabs: [
-                  Tab(text: 'Output (${state.stdout.length} chars)'),
-                  Tab(text: 'Errors (${state.stderr.length})'),
-                  const Tab(text: 'Input (stdin)'),
-                  Tab(text: 'Diagnostics (${state.diagnostics.length})'),
-                ],
+              Container(
+                decoration: BoxDecoration(
+                  color: tokens.panelHeader,
+                  border: Border(
+                    bottom: BorderSide(color: tokens.border, width: 1),
+                  ),
+                ),
+                child: TabBar(
+                  controller: _tabController,
+                  isScrollable: true,
+                  labelColor: tokens.primaryText,
+                  unselectedLabelColor: tokens.secondaryText,
+                  indicatorColor: tokens.accent,
+                  tabs: [
+                    Tab(text: 'Output (${state.stdout.length} chars)'),
+                    Tab(text: 'Errors (${state.stderr.length})'),
+                    const Tab(text: 'Input (stdin)'),
+                    Tab(text: 'Diagnostics (${state.diagnostics.length})'),
+                  ],
+                ),
               ),
               Expanded(
                 child: TabBarView(
@@ -57,17 +65,17 @@ class _ConsolePanelState extends State<ConsolePanel>
                       state.stdout.isEmpty
                           ? 'Press "Run" to execute code locally.'
                           : state.stdout,
-                      isDark,
+                      tokens,
                     ),
                     _buildTextScroll(
                       state.stderr.isEmpty
                           ? 'No errors reported.'
                           : state.stderr,
-                      isDark,
+                      tokens,
                       isError: state.stderr.isNotEmpty,
                     ),
-                    _buildStdinInput(context, state, isDark),
-                    _buildDiagnosticsList(state, isDark),
+                    _buildStdinInput(context, state, tokens),
+                    _buildDiagnosticsList(state, tokens),
                   ],
                 ),
               ),
@@ -78,7 +86,8 @@ class _ConsolePanelState extends State<ConsolePanel>
     );
   }
 
-  Widget _buildTextScroll(String text, bool isDark, {bool isError = false}) {
+  Widget _buildTextScroll(String text, PolyCodeThemeTokens tokens,
+      {bool isError = false}) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(12),
       child: SelectableText(
@@ -86,27 +95,39 @@ class _ConsolePanelState extends State<ConsolePanel>
         style: TextStyle(
           fontFamily: 'monospace',
           fontSize: 13,
-          color: isError
-              ? PolyCodeTheme.errorColor
-              : (isDark
-                  ? PolyCodeTheme.darkTextPrimary
-                  : PolyCodeTheme.lightTextPrimary),
+          color: isError ? tokens.error : tokens.terminalForeground,
         ),
       ),
     );
   }
 
   Widget _buildStdinInput(
-      BuildContext context, ExecutionBlocState state, bool isDark) {
+    BuildContext context,
+    ExecutionBlocState state,
+    PolyCodeThemeTokens tokens,
+  ) {
     return Padding(
       padding: const EdgeInsets.all(12.0),
       child: TextField(
         maxLines: null,
         expands: true,
-        style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
-        decoration: const InputDecoration(
+        style: TextStyle(
+          fontFamily: 'monospace',
+          fontSize: 13,
+          color: tokens.primaryText,
+        ),
+        decoration: InputDecoration(
           hintText: 'Enter custom standard input (stdin) lines here...',
-          border: OutlineInputBorder(),
+          hintStyle: TextStyle(color: tokens.mutedText),
+          border: OutlineInputBorder(
+            borderSide: BorderSide(color: tokens.border),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: tokens.border),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: tokens.accent),
+          ),
         ),
         onChanged: (val) {
           context.read<ExecutionBloc>().add(StdinChanged(val));
@@ -115,9 +136,15 @@ class _ConsolePanelState extends State<ConsolePanel>
     );
   }
 
-  Widget _buildDiagnosticsList(ExecutionBlocState state, bool isDark) {
+  Widget _buildDiagnosticsList(
+      ExecutionBlocState state, PolyCodeThemeTokens tokens) {
     if (state.diagnostics.isEmpty) {
-      return const Center(child: Text('No compiler diagnostics.'));
+      return Center(
+        child: Text(
+          'No compiler diagnostics.',
+          style: TextStyle(color: tokens.secondaryText),
+        ),
+      );
     }
 
     return ListView.builder(
@@ -126,14 +153,20 @@ class _ConsolePanelState extends State<ConsolePanel>
         final d = state.diagnostics[idx];
         return ListTile(
           dense: true,
-          leading: const Icon(Icons.error_outline,
-              color: PolyCodeTheme.errorColor, size: 18),
+          leading: Icon(Icons.error_outline, color: tokens.error, size: 18),
           title: Text(
             d.message,
-            style: const TextStyle(fontFamily: 'monospace', fontSize: 12.5),
+            style: TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 12.5,
+              color: tokens.primaryText,
+            ),
           ),
           subtitle: d.line != null
-              ? Text('Line ${d.line}, Column ${d.column ?? 1}')
+              ? Text(
+                  'Line ${d.line}, Column ${d.column ?? 1}',
+                  style: TextStyle(color: tokens.mutedText),
+                )
               : null,
         );
       },

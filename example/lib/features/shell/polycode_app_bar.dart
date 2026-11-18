@@ -18,10 +18,14 @@ class PolyCodeAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.polyTheme;
+
     return BlocBuilder<ThemeBloc, ThemeState>(
       builder: (context, themeState) {
         return AppBar(
           titleSpacing: 8,
+          backgroundColor: tokens.panelHeader,
+          foregroundColor: tokens.primaryText,
           title: LayoutBuilder(
             builder: (context, constraints) {
               if (constraints.maxWidth < 40) {
@@ -33,24 +37,25 @@ class PolyCodeAppBar extends StatelessWidget implements PreferredSizeWidget {
                   Container(
                     padding: const EdgeInsets.all(5),
                     decoration: BoxDecoration(
-                      color: PolyCodeTheme.accentColor.withValues(alpha: 0.2),
+                      color: tokens.accent.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.terminal,
-                      color: PolyCodeTheme.accentColor,
+                      color: tokens.accent,
                       size: 18,
                     ),
                   ),
                   if (constraints.maxWidth >= 100) ...[
                     const SizedBox(width: 8),
-                    const Flexible(
+                    Flexible(
                       child: Text(
                         'PolyCode',
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
+                          color: tokens.primaryText,
                         ),
                       ),
                     ),
@@ -77,17 +82,18 @@ class PolyCodeAppBar extends StatelessWidget implements PreferredSizeWidget {
                     DropdownButtonHideUnderline(
                       child: DropdownButton<WorkspaceLayout>(
                         value: layoutState.activeLayout,
+                        dropdownColor: tokens.panelBackground,
                         items: WorkspaceLayout.values.map((layout) {
                           return DropdownMenuItem(
                             value: layout,
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(layout.icon, size: 16),
+                                Icon(layout.icon, size: 16, color: tokens.primaryText),
                                 const SizedBox(width: 6),
                                 Text(
                                   layout.displayName,
-                                  style: const TextStyle(fontSize: 13),
+                                  style: TextStyle(fontSize: 13, color: tokens.primaryText),
                                 ),
                               ],
                             ),
@@ -114,6 +120,7 @@ class PolyCodeAppBar extends StatelessWidget implements PreferredSizeWidget {
                 return DropdownButtonHideUnderline(
                   child: DropdownButton<PolyLanguage>(
                     value: editorState.language,
+                    dropdownColor: tokens.panelBackground,
                     items: PolyLanguage.values.map((lang) {
                       final isRunnable = polycode.isEngineAvailable(lang);
                       return DropdownMenuItem(
@@ -121,7 +128,10 @@ class PolyCodeAppBar extends StatelessWidget implements PreferredSizeWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(lang.displayName),
+                            Text(
+                              lang.displayName,
+                              style: TextStyle(color: tokens.primaryText),
+                            ),
                             const SizedBox(width: 6),
                             Container(
                               padding: const EdgeInsets.symmetric(
@@ -167,7 +177,7 @@ class PolyCodeAppBar extends StatelessWidget implements PreferredSizeWidget {
                     },
                     icon: const Icon(Icons.stop),
                     style: IconButton.styleFrom(
-                      backgroundColor: PolyCodeTheme.errorColor,
+                      backgroundColor: tokens.error,
                     ),
                     tooltip: 'Stop execution',
                   );
@@ -186,7 +196,7 @@ class PolyCodeAppBar extends StatelessWidget implements PreferredSizeWidget {
                   icon: const Icon(Icons.play_arrow, size: 18),
                   label: const Text('Run'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: PolyCodeTheme.accentColor,
+                    backgroundColor: tokens.accent,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(horizontal: 10),
                   ),
@@ -204,16 +214,68 @@ class PolyCodeAppBar extends StatelessWidget implements PreferredSizeWidget {
               },
             ),
 
-            // Theme Toggle
-            IconButton(
+            // Theme Preset & Mode Selector Menu
+            PopupMenuButton<String>(
               icon: Icon(
-                themeState.isDark ? Icons.light_mode : Icons.dark_mode,
+                themeState.mode == ThemeMode.system
+                    ? Icons.brightness_auto
+                    : (themeState.isDark ? Icons.dark_mode : Icons.light_mode),
                 size: 20,
+                color: tokens.primaryText,
               ),
-              tooltip: 'Toggle Theme',
-              onPressed: () {
-                context.read<ThemeBloc>().add(const ToggleThemeRequested());
+              tooltip: 'Theme & Preferences',
+              color: tokens.panelBackground,
+              onSelected: (choice) {
+                final themeBloc = context.read<ThemeBloc>();
+                switch (choice) {
+                  case 'system':
+                    themeBloc.add(const SetThemeModeRequested(ThemeMode.system));
+                    break;
+                  case 'dark':
+                    themeBloc.add(
+                      const SetThemePresetRequested(PolyCodeThemePreset.dark),
+                    );
+                    break;
+                  case 'light':
+                    themeBloc.add(
+                      const SetThemePresetRequested(PolyCodeThemePreset.light),
+                    );
+                    break;
+                  case 'highContrast':
+                    themeBloc.add(
+                      const SetThemePresetRequested(PolyCodeThemePreset.highContrast),
+                    );
+                    break;
+                }
               },
+              itemBuilder: (ctx) => [
+                CheckedPopupMenuItem(
+                  value: 'dark',
+                  checked: themeState.preset == PolyCodeThemePreset.dark &&
+                      themeState.mode == ThemeMode.dark,
+                  child: Text('Dark Theme', style: TextStyle(color: tokens.primaryText)),
+                ),
+                CheckedPopupMenuItem(
+                  value: 'light',
+                  checked: themeState.preset == PolyCodeThemePreset.light &&
+                      themeState.mode == ThemeMode.light,
+                  child: Text('Light Theme', style: TextStyle(color: tokens.primaryText)),
+                ),
+                CheckedPopupMenuItem(
+                  value: 'highContrast',
+                  checked:
+                      themeState.preset == PolyCodeThemePreset.highContrast,
+                  child: Text('High Contrast (A11y)',
+                      style: TextStyle(color: tokens.primaryText)),
+                ),
+                const PopupMenuDivider(),
+                CheckedPopupMenuItem(
+                  value: 'system',
+                  checked: themeState.mode == ThemeMode.system,
+                  child: Text('Follow System Mode',
+                      style: TextStyle(color: tokens.primaryText)),
+                ),
+              ],
             ),
             const SizedBox(width: 8),
           ],

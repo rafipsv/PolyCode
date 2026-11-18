@@ -1,72 +1,122 @@
 import 'package:flutter/material.dart';
+import 'polycode_theme_tokens.dart';
 
-/// Central design tokens and color palettes for the PolyCode playground.
+export 'polycode_theme_tokens.dart';
+
+/// Central design tokens, color palettes, and theme configurations for the PolyCode playground.
 class PolyCodeTheme {
   PolyCodeTheme._();
 
-  // Dark Theme Tokens
-  static const Color darkBackground = Color(0xFF121417);
-  static const Color darkSurface = Color(0xFF1E2228);
-  static const Color darkPanelHeader = Color(0xFF262C34);
-  static const Color darkBorder = Color(0xFF333B46);
-  static const Color darkEditorBackground = Color(0xFF181B20);
-  static const Color darkTerminalBackground = Color(0xFF0F1115);
-  static const Color darkTextPrimary = Color(0xFFE6EDF3);
-  static const Color darkTextSecondary = Color(0xFF8B949E);
+  // Backward-compatible static constants
+  static const Color darkBackground = PolyCodeThemeTokens.darkAppBackground;
+  static const Color darkSurface = PolyCodeThemeTokens.darkPanelBackground;
+  static const Color darkPanelHeader = PolyCodeThemeTokens.darkPanelHeader;
+  static const Color darkBorder = PolyCodeThemeTokens.darkBorder;
+  static const Color darkEditorBackground =
+      PolyCodeThemeTokens.darkEditorBackground;
+  static const Color darkTerminalBackground =
+      PolyCodeThemeTokens.darkTerminalBackground;
+  static const Color darkTextPrimary = PolyCodeThemeTokens.darkPrimaryText;
+  static const Color darkTextSecondary = PolyCodeThemeTokens.darkSecondaryText;
 
-  // Light Theme Tokens
-  static const Color lightBackground = Color(0xFFF6F8FA);
-  static const Color lightSurface = Color(0xFFFFFFFF);
-  static const Color lightPanelHeader = Color(0xFFEAEEF2);
-  static const Color lightBorder = Color(0xFFD0D7DE);
-  static const Color lightEditorBackground = Color(0xFFFFFFFF);
-  static const Color lightTerminalBackground = Color(0xFFF3F4F6);
-  static const Color lightTextPrimary = Color(0xFF1F2328);
-  static const Color lightTextSecondary = Color(0xFF656D76);
+  static const Color lightBackground = PolyCodeThemeTokens.lightAppBackground;
+  static const Color lightSurface = PolyCodeThemeTokens.lightPanelBackground;
+  static const Color lightPanelHeader = PolyCodeThemeTokens.lightPanelHeader;
+  static const Color lightBorder = PolyCodeThemeTokens.lightBorder;
+  static const Color lightEditorBackground =
+      PolyCodeThemeTokens.lightEditorBackground;
+  static const Color lightTerminalBackground =
+      PolyCodeThemeTokens.lightTerminalBackground;
+  static const Color lightTextPrimary = PolyCodeThemeTokens.lightPrimaryText;
+  static const Color lightTextSecondary =
+      PolyCodeThemeTokens.lightSecondaryText;
 
-  // Accents & State Colors
-  static const Color accentColor = Color(0xFF2EA043); // Emerald run green
-  static const Color errorColor = Color(0xFFF85149);
-  static const Color warningColor = Color(0xFFD29922);
+  static const Color accentColor = PolyCodeThemeTokens.darkAccent;
+  static const Color errorColor = PolyCodeThemeTokens.darkError;
+  static const Color warningColor = PolyCodeThemeTokens.darkWarning;
   static const Color infoColor = Color(0xFF58A6FF);
 
+  /// Resolves ThemeData from a specific preset.
+  static ThemeData themeFromPreset(PolyCodeThemePreset preset) {
+    switch (preset) {
+      case PolyCodeThemePreset.dark:
+        return darkTheme;
+      case PolyCodeThemePreset.light:
+        return lightTheme;
+      case PolyCodeThemePreset.highContrast:
+        return highContrastTheme;
+    }
+  }
+
+  /// Dark theme configuration.
   static ThemeData get darkTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      scaffoldBackgroundColor: darkBackground,
+      scaffoldBackgroundColor: PolyCodeThemeTokens.darkAppBackground,
+      cardColor: PolyCodeThemeTokens.darkPanelBackground,
+      dividerColor: PolyCodeThemeTokens.darkBorder,
       colorScheme: const ColorScheme.dark(
-        primary: accentColor,
-        surface: darkSurface,
-        onSurface: darkTextPrimary,
-        outline: darkBorder,
-        error: errorColor,
+        primary: PolyCodeThemeTokens.darkAccent,
+        surface: PolyCodeThemeTokens.darkPanelBackground,
+        onSurface: PolyCodeThemeTokens.darkPrimaryText,
+        outline: PolyCodeThemeTokens.darkBorder,
+        error: PolyCodeThemeTokens.darkError,
       ),
       appBarTheme: const AppBarTheme(
-        backgroundColor: darkPanelHeader,
-        foregroundColor: darkTextPrimary,
+        backgroundColor: PolyCodeThemeTokens.darkPanelHeader,
+        foregroundColor: PolyCodeThemeTokens.darkPrimaryText,
         elevation: 0,
       ),
+      extensions: const [PolyCodeThemeTokens.dark],
     );
   }
 
+  /// Light theme configuration.
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      scaffoldBackgroundColor: lightBackground,
+      scaffoldBackgroundColor: PolyCodeThemeTokens.lightAppBackground,
+      cardColor: PolyCodeThemeTokens.lightPanelBackground,
+      dividerColor: PolyCodeThemeTokens.lightBorder,
       colorScheme: const ColorScheme.light(
-        primary: accentColor,
-        surface: lightSurface,
-        onSurface: lightTextPrimary,
-        outline: lightBorder,
-        error: errorColor,
+        primary: PolyCodeThemeTokens.lightAccent,
+        surface: PolyCodeThemeTokens.lightPanelBackground,
+        onSurface: PolyCodeThemeTokens.lightPrimaryText,
+        outline: PolyCodeThemeTokens.lightBorder,
+        error: PolyCodeThemeTokens.lightError,
       ),
       appBarTheme: const AppBarTheme(
-        backgroundColor: lightPanelHeader,
-        foregroundColor: lightTextPrimary,
+        backgroundColor: PolyCodeThemeTokens.lightPanelHeader,
+        foregroundColor: PolyCodeThemeTokens.lightPrimaryText,
         elevation: 0,
       ),
+      extensions: const [PolyCodeThemeTokens.light],
+    );
+  }
+
+  /// High contrast dark theme configuration for accessibility.
+  static ThemeData get highContrastTheme {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: PolyCodeThemeTokens.hcAppBackground,
+      cardColor: PolyCodeThemeTokens.hcPanelBackground,
+      dividerColor: PolyCodeThemeTokens.hcBorder,
+      colorScheme: const ColorScheme.dark(
+        primary: PolyCodeThemeTokens.hcAccent,
+        surface: PolyCodeThemeTokens.hcPanelBackground,
+        onSurface: PolyCodeThemeTokens.hcPrimaryText,
+        outline: PolyCodeThemeTokens.hcBorder,
+        error: PolyCodeThemeTokens.hcError,
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: PolyCodeThemeTokens.hcPanelHeader,
+        foregroundColor: PolyCodeThemeTokens.hcPrimaryText,
+        elevation: 0,
+      ),
+      extensions: const [PolyCodeThemeTokens.highContrast],
     );
   }
 }

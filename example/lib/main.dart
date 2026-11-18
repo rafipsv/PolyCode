@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:polycode/polycode.dart';
-import 'core/theme/polycode_theme.dart';
+import 'core/preferences/preferences_storage.dart';
 import 'features/competitive/bloc/competitive_bloc.dart';
 import 'features/editor/bloc/editor_bloc.dart';
 import 'features/execution/bloc/execution_bloc.dart';
@@ -41,9 +41,15 @@ class _PolyCodeAppState extends State<PolyCodeApp> {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (_) => ThemeBloc()),
-        BlocProvider(create: (_) => LayoutBloc()),
-        BlocProvider(create: (_) => EditorBloc()),
+        BlocProvider(
+          create: (_) => ThemeBloc(storage: PreferencesStorage.instance),
+        ),
+        BlocProvider(
+          create: (_) => LayoutBloc(storage: PreferencesStorage.instance),
+        ),
+        BlocProvider(
+          create: (_) => EditorBloc(storage: PreferencesStorage.instance),
+        ),
         BlocProvider(create: (_) => ExecutionBloc(polycode: _polycode)),
         BlocProvider(create: (_) => CompetitiveBloc(polycode: _polycode)),
         BlocProvider(create: (_) => IdeWorkspaceBloc()),
@@ -53,8 +59,8 @@ class _PolyCodeAppState extends State<PolyCodeApp> {
           return MaterialApp(
             title: 'PolyCode Playground',
             debugShowCheckedModeBanner: false,
-            theme: PolyCodeTheme.lightTheme,
-            darkTheme: PolyCodeTheme.darkTheme,
+            theme: themeState.lightTheme,
+            darkTheme: themeState.darkTheme,
             themeMode: themeState.mode,
             home: PolyCodeShell(polycode: _polycode),
           );

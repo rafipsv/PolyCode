@@ -12,45 +12,57 @@ class StatusBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg =
-        isDark ? PolyCodeTheme.darkPanelHeader : PolyCodeTheme.lightPanelHeader;
+    final tokens = context.polyTheme;
     final platform = polycode.platform.name.toUpperCase();
 
     return Container(
       height: 28,
       padding: const EdgeInsets.symmetric(horizontal: 12),
-      color: bg,
+      decoration: BoxDecoration(
+        color: tokens.panelHeader,
+        border: Border(
+          top: BorderSide(color: tokens.border, width: 1),
+        ),
+      ),
       child: Row(
         children: [
           BlocBuilder<EditorBloc, EditorState>(
             builder: (context, editorState) {
               return Text(
                 'Lang: ${editorState.language.displayName}',
-                style:
-                    const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: tokens.primaryText,
+                ),
               );
             },
           ),
           const SizedBox(width: 12),
           Text(
             'Platform: $platform',
-            style: const TextStyle(fontSize: 11),
+            style: TextStyle(fontSize: 11, color: tokens.secondaryText),
           ),
           const Spacer(),
           BlocBuilder<ExecutionBloc, ExecutionBlocState>(
             builder: (context, state) {
               if (state.isRunning) {
-                return const Row(
+                return Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     SizedBox(
                       width: 12,
                       height: 12,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: tokens.accent,
+                      ),
                     ),
-                    SizedBox(width: 6),
-                    Text('Executing...', style: TextStyle(fontSize: 11)),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Executing...',
+                      style: TextStyle(fontSize: 11, color: tokens.primaryText),
+                    ),
                   ],
                 );
               }
@@ -60,7 +72,7 @@ class StatusBar extends StatelessWidget {
                 children: [
                   Text(
                     'Time: ${state.duration.inMilliseconds}ms',
-                    style: const TextStyle(fontSize: 11),
+                    style: TextStyle(fontSize: 11, color: tokens.secondaryText),
                   ),
                   const SizedBox(width: 12),
                   if (state.exitCode != null)
@@ -68,18 +80,26 @@ class StatusBar extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 6, vertical: 1),
                       decoration: BoxDecoration(
-                        color: state.exitCode == 0
-                            ? Colors.green.withValues(alpha: 0.2)
-                            : Colors.red.withValues(alpha: 0.2),
+                        color: (state.exitCode == 0
+                                ? tokens.success
+                                : tokens.error)
+                            .withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(4),
+                        border: Border.all(
+                          color: state.exitCode == 0
+                              ? tokens.success
+                              : tokens.error,
+                          width: 0.5,
+                        ),
                       ),
                       child: Text(
                         'Exit: ${state.exitCode}',
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
-                          color:
-                              state.exitCode == 0 ? Colors.green : Colors.red,
+                          color: state.exitCode == 0
+                              ? tokens.success
+                              : tokens.error,
                         ),
                       ),
                     ),

@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:polycode/polycode.dart';
+import '../../../core/preferences/preferences_storage.dart';
 import 'editor_templates.dart';
 
 sealed class EditorEvent {
@@ -18,6 +19,10 @@ class LanguageChanged extends EditorEvent {
 
 class ResetTemplateRequested extends EditorEvent {
   const ResetTemplateRequested();
+}
+
+class LoadEditorPreferencesRequested extends EditorEvent {
+  const LoadEditorPreferencesRequested();
 }
 
 class EditorState {
@@ -48,8 +53,11 @@ class EditorState {
 }
 
 class EditorBloc extends Bloc<EditorEvent, EditorState> {
-  EditorBloc({PolyLanguage initialLanguage = PolyLanguage.python})
-      : super(
+  EditorBloc({
+    PolyLanguage initialLanguage = PolyLanguage.python,
+    PreferencesStorage? storage,
+  })  : _storage = storage,
+        super(
           EditorState(
             language: initialLanguage,
             source: EditorTemplates.defaults[initialLanguage] ?? '',
@@ -59,21 +67,53 @@ class EditorBloc extends Bloc<EditorEvent, EditorState> {
       emit(state.copyWith(source: event.newSource, isDirty: true));
     });
 
-    on<LanguageChanged>((event, emit) {
-      final template = EditorTemplates.defaults[event.newLanguage] ??
-          '// Write ${event.newLanguage.displayName} code here...\n';
-      emit(
-        state.copyWith(
-          language: event.newLanguage,
-          source: template,
-          isDirty: false,
-        ),
-      );
-    });
+    on<LanguageChanged>(_onLanguageChanged);
+    on<ResetTemplateRequested>(_onResetTemplate);
+    on<LoadEditorPreferencesRequested>(_onLoadPreferences);
 
-    on<ResetTemplateRequested>((event, emit) {
-      final template = EditorTemplates.defaults[state.language] ?? '';
-      emit(state.copyWith(source: template, isDirty: false));
-    });
+    if (_storage != null) {
+      add(const LoadEditorPreferencesRequested());
+    }
+  }
+
+  final PreferencesStorage? _storage;
+
+  Future<void> _onLanguageChanged(
+      LanguageChanged event, Emitter<EditorState> emit) async {
+    final template = EditorTemplates.defaults[event.newLanguage] ??
+        '// Write ${event.newLanguage.displayName} code here...\n';
+    emit(
+      state.copyWith(
+        language: event.newLanguage,
+        source: template,
+        isDirty: false,
+      ),
+    );
+    await _storage?.setString('polycode_editor_language', event.newLanguage.name);
+  }
+
+  void _onResetTemplate(
+      ResetTemplateRequested event, Emitter<EditorState> emit) {
+    final template = EditorTemplates.defaults[state.language] ?? '';
+    emit(state.copyWith(source: template, isDirty: false));
+  }
+
+  Future<void> _onLoadPreferences(
+      LoadEditorPreferencesRequested event, Emitter<EditorState> emit) async {
+    final storage = _storage;
+    if (storage == null) return;
+    final savedLang = await storage.getString('polycode_editor_language');
+    if (savedLang != null) {
+      final lang = PolyLanguage.values.firstWhere(
+        (l) => l.name == savedLang,
+        orElse: () => state.language,
+      );
+      if (lang != state.language && !state.isDirty) {
+        emit(state.copyWith(
+          language: lang,
+          source: EditorTemplates.defaults[lang] ?? state.source,
+        ));
+      }
+    }
   }
 }
