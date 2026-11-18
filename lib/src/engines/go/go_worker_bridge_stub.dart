@@ -277,6 +277,16 @@ class StubGoWorkerBridge implements GoWorkerBridge {
       return;
     }
 
+    // Try Node.js evaluation if available
+    final nodeBin = _resolveNodeExecutable();
+    if (nodeBin != null) {
+      final jsCode = _transpileGoToJs(source);
+      if (jsCode != null) {
+        yield* _executeWithNode(nodeBin, jsCode, stdinData, stopwatch);
+        return;
+      }
+    }
+
     // Evaluate fmt.Println / fmt.Printf
     final printRegex = RegExp(
         r'fmt\.(?:Println|Printf|Print)\s*\(\s*(?:"([^"]*)")?(?:\s*,\s*([^)]*))?\s*\)');
@@ -377,6 +387,164 @@ class StubGoWorkerBridge implements GoWorkerBridge {
         bytes: Uint8List.fromList([0x00, 0x61, 0x73, 0x6d]),
       ),
     );
+  }
+
+  String? _resolveNodeExecutable() {
+    try {
+      final res = Process.runSync('which', ['node']);
+      if (res.exitCode == 0 && res.stdout.toString().trim().isNotEmpty) {
+        return res.stdout.toString().trim();
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  String? _transpileGoToJs(String goCode) {
+    try {
+      var js = goCode;
+      js = js.replaceAll(RegExp(r'package\s+[A-Za-z0-9_]+;?'), '');
+      js = js.replaceAll(RegExp(r'import\s*\([^\)]*\)', multiLine: true), '');
+      js = js.replaceAll(RegExp(r'import\s+"[^"]*";?'), '');
+
+      js = js.replaceAllMapped(
+        RegExp(r'func\s+([A-Za-z_][A-Za-z0-9_]*)\s*\((.*?)\)(?:\s*[^{]+)?\s*\{'),
+        (match) {
+          final name = match.group(1)!;
+          final rawParams = match.group(2) ?? '';
+          final cleanParams = rawParams.split(',').map((p) {
+            final parts = p.trim().split(RegExp(r'\s+'));
+            return parts.isNotEmpty ? parts.first : '';
+          }).where((p) => p.isNotEmpty).join(', ');
+          return 'function $name($cleanParams) {';
+        },
+      );
+
+      js = js.replaceAllMapped(
+        RegExp(r'([A-Za-z_][A-Za-z0-9_]*)\s*:=\s*'),
+        (match) => 'let ${match.group(1)} = ',
+      );
+
+      js = js.replaceAllMapped(
+        RegExp(r'\[\][A-Za-z0-9_]+\s*\{([^}]+)\}'),
+        (m) => '[${m.group(1)}]',
+      );
+
+      js = js.replaceAllMapped(
+        RegExp(r'\blen\s*\(\s*([A-Za-z0-9_\.]+)\s*\)'),
+        (match) => '${match.group(1)}.length',
+      );
+
+      js = js.replaceAllMapped(
+        RegExp(r'\bfor\s+([^{]+)\s*\{'),
+        (match) {
+          final cond = match.group(1)!.trim();
+          if (cond.startsWith('(') && cond.endsWith(')')) {
+            return 'for $cond {';
+          }
+          return 'for ($cond) {';
+        },
+      );
+
+      js = js.replaceAllMapped(
+        RegExp(r'\bif\s+([^{]+)\s*\{'),
+        (match) {
+          final cond = match.group(1)!.trim();
+          if (cond.startsWith('(') && cond.endsWith(')')) {
+            return 'if $cond {';
+          }
+          return 'if ($cond) {';
+        },
+      );
+
+      js = js.replaceAllMapped(
+        RegExp(r'fmt\.Println\s*\(\s*(.*?)\s*\)'),
+        (match) => 'console.log(${match.group(1)})',
+      );
+
+      js = js.replaceAllMapped(
+        RegExp(r'fmt\.Printf\s*\(\s*"([^"]*)"(?:\s*,\s*(.*?))?\s*\)'),
+        (match) {
+          final fmt = match.group(1) ?? '';
+          final args = match.group(2);
+          if (args == null || args.isEmpty) {
+            return 'console.log("$fmt");';
+          }
+          return 'console.log("$fmt", $args);';
+        },
+      );
+
+      js += '\nif (typeof main === "function") { main(); }\n';
+      return js;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Stream<ExecutionEvent> _executeWithNode(
+    String nodePath,
+    String jsCode,
+    String stdinData,
+    Stopwatch stopwatch,
+  ) async* {
+    final controller = StreamController<ExecutionEvent>();
+
+    final wrapper = '''
+const readline = require('readline');
+let stdinLines = ${jsonEncode(stdinData)}.split('\\n');
+let stdinCursor = 0;
+function readLine() {
+  return stdinCursor < stdinLines.length ? stdinLines[stdinCursor++] : null;
+}
+try {
+  $jsCode
+  process.exit(0);
+} catch (err) {
+  console.error(err && err.message ? err.message : String(err));
+  process.exit(1);
+}
+''';
+
+    Process? process;
+    try {
+      process = await Process.start(nodePath, ['-e', wrapper]);
+      _activeProcess = process;
+
+      if (stdinData.isNotEmpty) {
+        process.stdin.write(stdinData);
+        await process.stdin.flush();
+      }
+      await process.stdin.close();
+
+      process.stdout.transform(utf8.decoder).listen((chunk) {
+        controller.add(StdoutExecutionEvent(chunk));
+      });
+
+      process.stderr.transform(utf8.decoder).listen((chunk) {
+        controller.add(StderrExecutionEvent(chunk));
+      });
+
+      process.exitCode.then((code) {
+        stopwatch.stop();
+        controller.add(
+          CompletedExecutionEvent(
+            ExecutionResult(
+              exitCode: code,
+              isSuccess: code == 0,
+              duration: stopwatch.elapsed,
+            ),
+          ),
+        );
+        controller.close();
+      });
+
+      yield* controller.stream;
+    } catch (_) {
+      stopwatch.stop();
+      controller.close();
+    } finally {
+      process?.kill();
+      _activeProcess = null;
+    }
   }
 
   @override

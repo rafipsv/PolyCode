@@ -261,6 +261,16 @@ class StubRustWorkerBridge implements RustWorkerBridge {
       return;
     }
 
+    // Try Node.js evaluation if available
+    final nodeBin = _resolveNodeExecutable();
+    if (nodeBin != null) {
+      final jsCode = _transpileRustToJs(source);
+      if (jsCode != null) {
+        yield* _executeWithNode(nodeBin, jsCode, stdinData, stopwatch);
+        return;
+      }
+    }
+
     // Evaluate println! matches
     final printRegex =
         RegExp(r'println!\s*\(\s*"([^"]*)"(?:\s*,\s*([^)]*))?\s*\)');
@@ -351,6 +361,191 @@ class StubRustWorkerBridge implements RustWorkerBridge {
         bytes: Uint8List.fromList([0x00, 0x61, 0x73, 0x6d]),
       ),
     );
+  }
+
+  String? _resolveNodeExecutable() {
+    try {
+      final res = Process.runSync('which', ['node']);
+      if (res.exitCode == 0 && res.stdout.toString().trim().isNotEmpty) {
+        return res.stdout.toString().trim();
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  String? _transpileRustToJs(String rustCode) {
+    try {
+      var js = rustCode;
+      js = js.replaceAll(RegExp(r'//[^\n]*'), '');
+
+      js = js.replaceAllMapped(
+        RegExp(r'println!\s*\(\s*"([^"]*)"(?:\s*,\s*(.*?))?\s*\);?'),
+        (match) {
+          final fmt = match.group(1) ?? '';
+          final argsStr = match.group(2);
+          if (argsStr == null || argsStr.trim().isEmpty) {
+            return 'console.log("$fmt");';
+          }
+          final args = argsStr.split(',').map((s) => s.trim()).toList();
+          var parts = fmt.split(RegExp(r'\{(?::\?)?\}'));
+          var out = StringBuffer('console.log(');
+          for (int i = 0; i < parts.length; i++) {
+            if (parts[i].isNotEmpty) {
+              out.write(jsonEncode(parts[i]));
+              if (i < args.length) out.write(' + ');
+            }
+            if (i < args.length) {
+              out.write('(${args[i]})');
+              if (i < parts.length - 1 && parts[i + 1].isNotEmpty) {
+                out.write(' + ');
+              }
+            }
+          }
+          out.write(');');
+          return out.toString();
+        },
+      );
+
+      js = js.replaceAllMapped(
+        RegExp(r'print!\s*\(\s*"([^"]*)"(?:\s*,\s*(.*?))?\s*\);?'),
+        (match) {
+          final fmt = match.group(1) ?? '';
+          final argsStr = match.group(2);
+          if (argsStr == null || argsStr.trim().isEmpty) {
+            return 'process.stdout.write("$fmt");';
+          }
+          return 'process.stdout.write("$fmt" + ($argsStr));';
+        },
+      );
+
+      js = js.replaceAllMapped(
+        RegExp(r'fn\s+([A-Za-z_][A-Za-z0-9_]*)\s*\((.*?)\)(?:\s*->\s*[^{]+)?\s*\{'),
+        (match) {
+          final name = match.group(1)!;
+          final rawParams = match.group(2) ?? '';
+          final cleanParams = rawParams.split(',').map((p) {
+            final colon = p.indexOf(':');
+            return (colon != -1 ? p.substring(0, colon) : p)
+                .replaceAll('mut ', '')
+                .trim();
+          }).where((p) => p.isNotEmpty).join(', ');
+          return 'function $name($cleanParams) {';
+        },
+      );
+
+      js = js.replaceAllMapped(
+        RegExp(r'\bif\s+([^{]+)\s*\{'),
+        (match) {
+          final cond = match.group(1)!.trim();
+          if (cond.startsWith('(') && cond.endsWith(')')) {
+            return 'if $cond {';
+          }
+          return 'if ($cond) {';
+        },
+      );
+
+      js = js.replaceAllMapped(
+        RegExp(r'\bwhile\s+([^{]+)\s*\{'),
+        (match) {
+          final cond = match.group(1)!.trim();
+          if (cond.startsWith('(') && cond.endsWith(')')) {
+            return 'while $cond {';
+          }
+          return 'while ($cond) {';
+        },
+      );
+
+      js = js.replaceAllMapped(
+        RegExp(r'\bfor\s+([A-Za-z_][A-Za-z0-9_]*)\s+in\s+(\d+)\.\.(\d+)\s*\{'),
+        (match) {
+          final v = match.group(1)!;
+          final start = match.group(2)!;
+          final end = match.group(3)!;
+          return 'for (let $v = $start; $v < $end; $v++) {';
+        },
+      );
+
+      js = js.replaceAllMapped(
+        RegExp(r'let\s+(?:mut\s+)?([A-Za-z_][A-Za-z0-9_]*)(?:\s*:\s*[^=;]+)?\s*='),
+        (match) => 'let ${match.group(1)} =',
+      );
+
+      js = js.replaceAll(RegExp(r'vec!\s*\['), '[');
+      js = js.replaceAll('.len()', '.length');
+      js = js.replaceAll('.sort()', '.sort((a, b) => a - b)');
+
+      js += '\nif (typeof main === "function") { main(); }\n';
+      return js;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Stream<ExecutionEvent> _executeWithNode(
+    String nodePath,
+    String jsCode,
+    String stdinData,
+    Stopwatch stopwatch,
+  ) async* {
+    final controller = StreamController<ExecutionEvent>();
+
+    final wrapper = '''
+const readline = require('readline');
+let stdinLines = ${jsonEncode(stdinData)}.split('\\n');
+let stdinCursor = 0;
+function readLine() {
+  return stdinCursor < stdinLines.length ? stdinLines[stdinCursor++] : null;
+}
+try {
+  $jsCode
+  process.exit(0);
+} catch (err) {
+  console.error(err && err.message ? err.message : String(err));
+  process.exit(1);
+}
+''';
+
+    Process? process;
+    try {
+      process = await Process.start(nodePath, ['-e', wrapper]);
+      _activeProcess = process;
+
+      if (stdinData.isNotEmpty) {
+        process.stdin.write(stdinData);
+        await process.stdin.flush();
+      }
+      await process.stdin.close();
+
+      process.stdout.transform(utf8.decoder).listen((chunk) {
+        controller.add(StdoutExecutionEvent(chunk));
+      });
+
+      process.stderr.transform(utf8.decoder).listen((chunk) {
+        controller.add(StderrExecutionEvent(chunk));
+      });
+
+      process.exitCode.then((code) {
+        stopwatch.stop();
+        controller.add(
+          CompletedExecutionEvent(
+            ExecutionResult(
+              exitCode: code,
+              isSuccess: code == 0,
+              duration: stopwatch.elapsed,
+            ),
+          ),
+        );
+        controller.close();
+      });
+
+      yield* controller.stream;
+    } catch (_) {
+      stopwatch.stop();
+      controller.close();
+    } finally {
+      process?.kill();
+      _activeProcess = null;
+    }
   }
 
   @override
